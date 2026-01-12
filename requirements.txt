@@ -1,0 +1,9 @@
+discord.py==2.6.3
+python-dotenv
+aiosqlite
+aiohttp
+random
+transformers
+torch
+hf_xet
+#I'm 90% sure this will definetly be missing some things..

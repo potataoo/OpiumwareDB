@@ -1,0 +1,9 @@
+services:
+  discord-bot:
+    build: .
+    image: potatao-bot
+    env_file:
+      - .env
+    volumes:
+      - ./database:/bot/database
+      - ./discord.log:/bot/discord.log

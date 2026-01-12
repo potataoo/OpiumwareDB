@@ -1,0 +1,544 @@
+{
+  "examples": [
+    {
+      "text": "can someone drop me some kits?",
+      "label": 1
+    },
+    {
+      "text": "i need a stash badly im poor",
+      "label": 1
+    },
+    {
+      "text": "who has dupes to spare?",
+      "label": 1
+    },
+    {
+      "text": "gimme free stuff",
+      "label": 1
+    },
+    {
+      "text": "is anyone giving away shulkers?",
+      "label": 1
+    },
+    {
+      "text": "coords to a stash please",
+      "label": 1
+    },
+    {
+      "text": "begging for items rn",
+      "label": 1
+    },
+    {
+      "text": "can i get a kit?",
+      "label": 1
+    },
+    {
+      "text": "need gear plz help",
+      "label": 1
+    },
+    {
+      "text": "looking for rich players to drop loot",
+      "label": 1
+    },
+    {
+      "text": "anyone wanna share their stash?",
+      "label": 1
+    },
+    {
+      "text": "giving out dupes?",
+      "label": 1
+    },
+    {
+      "text": "i died can i get a rekit",
+      "label": 1
+    },
+    {
+      "text": "spare some crystals?",
+      "label": 1
+    },
+    {
+      "text": "yo who can hook me up with items",
+      "label": 1
+    },
+    {
+      "text": "need stacked totems",
+      "label": 1
+    },
+    {
+      "text": "free items at spawn?",
+      "label": 1
+    },
+    {
+      "text": "plz give dupe",
+      "label": 1
+    },
+    {
+      "text": "any dupers online to help me out?",
+      "label": 1
+    },
+    {
+      "text": "where can i get free gear?",
+      "label": 1
+    },
+    {
+      "text": "drop cords for loot",
+      "label": 1
+    },
+    {
+      "text": "im new give items",
+      "label": 1
+    },
+    {
+      "text": "duped items handout when?",
+      "label": 1
+    },
+    {
+      "text": "can u drop me a sword",
+      "label": 1
+    },
+    {
+      "text": "giving away stashes?",
+      "label": 1
+    },
+    {
+      "text": "where is the download for ui utils?",
+      "label": 2
+    },
+    {
+      "text": "link to ui-utils please",
+      "label": 2
+    },
+    {
+      "text": "can someone send the inventory viewer mod?",
+      "label": 2
+    },
+    {
+      "text": "i need ui utils for 1.20",
+      "label": 2
+    },
+    {
+      "text": "where do i get the shulker preview mod",
+      "label": 2
+    },
+    {
+      "text": "uiutils download link",
+      "label": 2
+    },
+    {
+      "text": "how do i download ui utils",
+      "label": 2
+    },
+    {
+      "text": "is there a github for ui utils?",
+      "label": 2
+    },
+    {
+      "text": "send ui utils jar",
+      "label": 2
+    },
+    {
+      "text": "looking for the utils mod",
+      "label": 2
+    },
+    {
+      "text": "whered u get that inventory mod?",
+      "label": 2
+    },
+    {
+      "text": "need the container preview tool",
+      "label": 2
+    },
+    {
+      "text": "ui-utils link not working help",
+      "label": 2
+    },
+    {
+      "text": "what mod lets you see inside shulkers?",
+      "label": 2
+    },
+    {
+      "text": "plz link ui utils",
+      "label": 2
+    },
+    {
+      "text": "download for the interface mod?",
+      "label": 2
+    },
+    {
+      "text": "can i have the ui utils file",
+      "label": 2
+    },
+    {
+      "text": "is ui utils compatible with sodium?",
+      "label": 2
+    },
+    {
+      "text": "latest release of uiutils?",
+      "label": 2
+    },
+    {
+      "text": "where to find ui-utils",
+      "label": 2
+    },
+    {
+      "text": "link me the inventory tool",
+      "label": 2
+    },
+    {
+      "text": "ui utils discord link?",
+      "label": 2
+    },
+    {
+      "text": "mod that shows armor status?",
+      "label": 2
+    },
+    {
+      "text": "need ui utils asap",
+      "label": 2
+    },
+    {
+      "text": "cant find the ui utils download",
+      "label": 2
+    },
+    {
+      "text": "where is the meteor addon?",
+      "label": 3
+    },
+    {
+      "text": "link for the custom addon",
+      "label": 3
+    },
+    {
+      "text": "how to install the dupe addon",
+      "label": 3
+    },
+    {
+      "text": "download link for the meteor plugin",
+      "label": 3
+    },
+    {
+      "text": "where are the scripts located?",
+      "label": 3
+    },
+    {
+      "text": "need the addon for finding stashes",
+      "label": 3
+    },
+    {
+      "text": "is the meteor addon updated?",
+      "label": 3
+    },
+    {
+      "text": "send the addon jar",
+      "label": 3
+    },
+    {
+      "text": "where to get the crash addon",
+      "label": 3
+    },
+    {
+      "text": "link to the modpack or addon?",
+      "label": 3
+    },
+    {
+      "text": "can someone drop the meteor scripts?",
+      "label": 3
+    },
+    {
+      "text": "looking for the client addon",
+      "label": 3
+    },
+    {
+      "text": "best addon for meteor?",
+      "label": 3
+    },
+    {
+      "text": "where is the resources channel for addons",
+      "label": 3
+    },
+    {
+      "text": "how to get the extra modules for meteor",
+      "label": 3
+    },
+    {
+      "text": "addon download pls",
+      "label": 3
+    },
+    {
+      "text": "what addon are you using?",
+      "label": 3
+    },
+    {
+      "text": "link for blackout or the custom one?",
+      "label": 3
+    },
+    {
+      "text": "need meteor addons",
+      "label": 3
+    },
+    {
+      "text": "is the addon on github?",
+      "label": 3
+    },
+    {
+      "text": "where to download the stash finder script",
+      "label": 3
+    },
+    {
+      "text": "link for the anarchy addon",
+      "label": 3
+    },
+    {
+      "text": "meteor plugins download",
+      "label": 3
+    },
+    {
+      "text": "addon file location?",
+      "label": 3
+    },
+    {
+      "text": "give me the addon link",
+      "label": 3
+    },
+    {
+      "text": "how do i dupe?",
+      "label": 4
+    },
+    {
+      "text": "is there a tutorial for the donkey dupe?",
+      "label": 4
+    },
+    {
+      "text": "what is the mission of this server?",
+      "label": 4
+    },
+    {
+      "text": "how to find stashes easily?",
+      "label": 4
+    },
+    {
+      "text": "guide on how to use the dupe glitch",
+      "label": 4
+    },
+    {
+      "text": "explain how the chunk dupe works",
+      "label": 4
+    },
+    {
+      "text": "where are the rules?",
+      "label": 4
+    },
+    {
+      "text": "help i am stuck at spawn",
+      "label": 4
+    },
+    {
+      "text": "how does the economy work here",
+      "label": 4
+    },
+    {
+      "text": "ways to find dupes?",
+      "label": 4
+    },
+    {
+      "text": "is duping allowed?",
+      "label": 4
+    },
+    {
+      "text": "teach me to dupe please",
+      "label": 4
+    },
+    {
+      "text": "what clients are allowed?",
+      "label": 4
+    },
+    {
+      "text": "how do i use the addon to find bases?",
+      "label": 4
+    },
+    {
+      "text": "new player guide?",
+      "label": 4
+    },
+    {
+      "text": "why do we destroy the economy?",
+      "label": 4
+    },
+    {
+      "text": "help with installation",
+      "label": 4
+    },
+    {
+      "text": "how to execute the glitch",
+      "label": 4
+    },
+    {
+      "text": "what is the best method to dupe?",
+      "label": 4
+    },
+    {
+      "text": "can someone explain the server lore",
+      "label": 4
+    },
+    {
+      "text": "where is the help channel",
+      "label": 4
+    },
+    {
+      "text": "how to use baritone to mine",
+      "label": 4
+    },
+    {
+      "text": "what is book banning?",
+      "label": 4
+    },
+    {
+      "text": "how do i fix my config",
+      "label": 4
+    },
+    {
+      "text": "tutorial for newfags",
+      "label": 4
+    },
+    {
+      "text": "i just found a massive dupe stash",
+      "label": 0
+    },
+    {
+      "text": "duping is so boring honestly",
+      "label": 0
+    },
+    {
+      "text": "my ui utils is crashing my game",
+      "label": 0
+    },
+    {
+      "text": "the addon is actually pretty good",
+      "label": 0
+    },
+    {
+      "text": "i hate people who beg for items",
+      "label": 0
+    },
+    {
+      "text": "just installed meteor client",
+      "label": 0
+    },
+    {
+      "text": "hello everyone how are you",
+      "label": 0
+    },
+    {
+      "text": "the server is lagging so bad",
+      "label": 0
+    },
+    {
+      "text": "i already have the addon installed",
+      "label": 0
+    },
+    {
+      "text": "ui utils looks clean",
+      "label": 0
+    },
+    {
+      "text": "not asking for a dupe just talking",
+      "label": 0
+    },
+    {
+      "text": "this server has no rules lol",
+      "label": 0
+    },
+    {
+      "text": "going to sleep gn",
+      "label": 0
+    },
+    {
+      "text": "lol that base was easy to find",
+      "label": 0
+    },
+    {
+      "text": "meteor is better than future client",
+      "label": 0
+    },
+    {
+      "text": "stop spamming the chat",
+      "label": 0
+    },
+    {
+      "text": "my stash got griefed yesterday",
+      "label": 0
+    },
+    {
+      "text": "ui utils updated to the new version automatically",
+      "label": 0
+    },
+    {
+      "text": "the economy is already ruined",
+      "label": 0
+    },
+    {
+      "text": "dont click suspicious links guys",
+      "label": 0
+    },
+    {
+      "text": "i am using the donkey method right now",
+      "label": 0
+    },
+    {
+      "text": "waiting for the queue",
+      "label": 0
+    },
+    {
+      "text": "nice skin bro",
+      "label": 0
+    },
+    {
+      "text": "anyone want to team up? not begging",
+      "label": 0
+    },
+    {
+      "text": "the new chunks are corrupted",
+      "label": 0
+    },
+    {
+      "text": "admin is online",
+      "label": 0
+    },
+    {
+      "text": "check out this screenshot",
+      "label": 0
+    },
+    {
+      "text": "why is chat so toxic",
+      "label": 0
+    },
+    {
+      "text": "i crafted these items myself",
+      "label": 0
+    },
+    {
+      "text": "java runtime error help",
+      "label": 0
+    },
+    {
+      "text": ".listbuzzwords",
+      "label": 0
+    },
+    {
+      "text": ".addbuzzword",
+      "label": 0
+    },
+    {
+      "text": "can i get perms?",
+      "label": 0
+    },
+    {
+      "text": "who got grok fruity",
+      "label": 0
+    },
+    {
+      "text": "Im numernuts",
+      "label": 0
+    }
+  ]
+}

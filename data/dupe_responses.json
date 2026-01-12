@@ -1,0 +1,43 @@
+{
+  "categories": {
+    "dupe_request": {
+      "title": "How about.. not in here?",
+      "description": "This channel isn't meant for this, also maybe read the rules next time.",
+      "channel_id": 1407866168894820445,
+      "channel_text": "Dupe Begging",
+      "color": 14691115
+    },
+    "ui_utils_request": {
+      "title": "Looking for UI-Utils?",
+      "description": "UI-Utils is available [here](https://www.curseforge.com/minecraft/mc-mods/uiutils)!",
+      "channel_id": null,
+      "channel_text": null,
+      "color": 10257647
+    },
+    "addon_request": {
+      "title": "Mod Downloads",
+      "description": "Check out our mod downloads channel! It has plenty of things to get you started.",
+      "channel_id": 1450648800229064745,
+      "channel_text": "Useful Mods",
+      "color": 5763719
+    },
+    "general_help": {
+      "title": "Need Help?",
+      "description": "Please read our rules and guides first!\n\n**Guides**\nhttps://dupe.today/",
+      "channel_id": 1428852600526078044,
+      "channel_text": "Rules",
+      "color": 16705372
+    }
+  },
+  "rules_channel_id": 123456789,
+  "label_mapping": {
+    "0": "not_request",
+    "1": "dupe_request",
+    "2": "ui_utils_request",
+    "3": "addon_request",
+    "4": "general_help"
+  },
+  "ignored_channels": [
+    1407866168894820445
+  ]
+}
