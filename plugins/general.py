@@ -102,11 +102,6 @@ class General(commands.Cog, name="general"):
         description="Get some useful (or not) information about the server.",
     )
     async def serverinfo(self, context: Context) -> None:
-        """
-        Get some useful (or not) information about the server.
-
-        :param context: The hybrid command context.
-        """
         roles = [role.name for role in context.guild.roles]
         num_roles = len(roles)
         if num_roles > 50:
@@ -133,14 +128,9 @@ class General(commands.Cog, name="general"):
         description="Check if the bot is alive.",
     )
     async def ping(self, context: Context) -> None:
-        """
-        Check if the bot is alive.
-
-        :param context: The hybrid command context.
-        """
         embed = discord.Embed(
-            title="🏓 Pong!",
-            description=f"The bot latency is {round(self.bot.latency * 1000)}ms.",
+            title="hi",
+            description=f"I currently am {round(self.bot.latency * 1000)}ms slow.",
             color=0xBEBEFE,
         )
         await context.send(embed=embed)
@@ -162,17 +152,11 @@ class General(commands.Cog, name="general"):
 
     @commands.hybrid_command(
         name="8ball",
-        description="Ask any question to the bot.",
+        description="Even worse version of gambling",
     )
     @app_commands.describe(question="The question you want to ask.")
     async def eight_ball(self, context: Context, *, question: str) -> None:
-        """
-        Ask any question to the bot.
-
-        :param context: The hybrid command context.
-        :param question: The question that should be asked by the user.
-        """
-        answers = [
+        answers = [ # thank you stack overflow post from 2006
             "It is certain.",
             "It is decidedly so.",
             "You may rely on it.",
@@ -195,22 +179,17 @@ class General(commands.Cog, name="general"):
             "Very doubtful.",
         ]
         embed = discord.Embed(
-            title="**My Answer:**",
+            title="**Uuuum I thinkk..**",
             description=f"{random.choice(answers)}",
             color=0xBEBEFE,
         )
-        embed.set_footer(text=f"The question was: {question}")
+        embed.set_footer(text=f"I think you asked: {question}")
         await context.send(embed=embed)
 
     @app_commands.command(
-        name="feedback", description="Submit a feedback for the owners of the bot"
+        name="feedback", description="Submit a feedback for the owners of the bot, just kidding! We probably won't see this."
     )
     async def feedback(self, interaction: discord.Interaction) -> None:
-        """
-        Submit a feedback for the owners of the bot.
-
-        :param context: The hybrid command context.
-        """
         feedback_form = FeedbackForm()
         await interaction.response.send_modal(feedback_form)
 
@@ -218,7 +197,7 @@ class General(commands.Cog, name="general"):
         interaction = feedback_form.interaction
         await interaction.response.send_message(
             embed=discord.Embed(
-                description="Thank you for your feedback, the owners have been notified about it.",
+                description="Thank you for your feedback, we reeeeeeaaalyyy care about what you have to say.",
                 color=0xBEBEFE,
             )
         )
@@ -226,8 +205,8 @@ class General(commands.Cog, name="general"):
         app_owner = (await self.bot.application_info()).owner
         await app_owner.send(
             embed=discord.Embed(
-                title="New Feedback",
-                description=f"{interaction.user} (<@{interaction.user.id}>) has submitted a new feedback:\n```\n{feedback_form.answer}\n```",
+                title="Some buffoon wants to tell you something",
+                description=f"{interaction.user} (<@{interaction.user.id}>) wanted to tell you this about the bot:\n```\n{feedback_form.answer}\n```",
                 color=0xBEBEFE,
             )
         )

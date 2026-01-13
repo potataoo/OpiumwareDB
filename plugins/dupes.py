@@ -5,6 +5,7 @@ import os
 import warnings
 import time
 import shutil
+import re
 from pathlib import Path
 
 from discord import app_commands
@@ -82,6 +83,8 @@ class Dupes(commands.Cog, name="dupes"):
                 "ignored_channels": [],
                 "allowed_roles": [],
                 "cooldown_seconds": 60,
+                "delete_after_seconds": 15, # pro
+                "buzzwords": [], # even more pro
                 "label_mapping": {
                     "0": "not_request",
                     "1": "dupe_request",
@@ -140,6 +143,15 @@ class Dupes(commands.Cog, name="dupes"):
         if self.is_on_cooldown(message.author.id):
             logger.debug(f"{message.author} is on cooldown, saving cpu cycles...")
             return
+
+        # Checks if the message contains specific buzzwords before bothering the model
+        buzzwords = self.config.get("buzzwords", [])
+        if buzzwords:
+            # a regex or statement, the true top quality compute
+            pattern = "|".join(re.escape(t) for t in buzzwords) 
+            # if it doesn't match regex, ignore (i really hope this doesn't come back to haunt me later on)
+            if not re.search(pattern, message.content, re.IGNORECASE):
+                return
         
         try:
             # Predict category (very pro ai stuff)
@@ -187,7 +199,12 @@ class Dupes(commands.Cog, name="dupes"):
             embed.set_footer(text=f"Read our rules in {rules_mention}")
             
             # removing the next line will make you want to overose again
-            await message.reply(embed=embed, mention_author=False)
+            # omg it dies now
+            del_seconds = self.config.get("delete_after_seconds", 0)
+            if del_seconds > 0:
+                await message.reply(embed=embed, mention_author=False, delete_after=del_seconds)
+            else:
+                await message.reply(embed=embed, mention_author=False)
             
         except Exception as e:
             logger.error(f"you noob vibecoder!! pls fix: {e}", exc_info=True)
@@ -364,15 +381,15 @@ class Dupes(commands.Cog, name="dupes"):
             await context.send(embed=embed)
 
     @commands.hybrid_command(
-        name="addbuzzword",
-        description="Add a training example to a category"
+        name="addexample",
+        description="Add a training example to a category (used to be addbuzzword)"
     )
     @app_commands.describe(
         label="Category label (0=not_request, 1=dupe_request, 2=ui_utils, 3=addon, 4=general_help)",
         message="Example message to add"
     )
     @is_potato()
-    async def addbuzzword(self, context: Context, label: int, *, message: str) -> None:
+    async def addexample(self, context: Context, label: int, *, message: str) -> None:
         if label < 0 or label > 4:
             embed = discord.Embed(
                 description="❌ Label must be between 0 and 4 (read the command description noob)",
@@ -410,7 +427,7 @@ class Dupes(commands.Cog, name="dupes"):
         category_name = self.config["label_mapping"].get(str(label), "unknown")
         
         embed = discord.Embed(
-            title="✅ Buzzword Added",
+            title="✅ Example Added",
             description=f"Added to category: **{category_name}** (label {label})",
             color=0x57F287
         )
@@ -426,12 +443,12 @@ class Dupes(commands.Cog, name="dupes"):
         logger.info(f"Added training example: '{message}' with label {label}")
 
     @commands.hybrid_command(
-        name="removebuzzword",
-        description="Remove a training example"
+        name="removeexample",
+        description="Remove a training example (used to be removebuzzword)"
     )
     @app_commands.describe(message="Exact message to remove from training data")
     @is_potato()
-    async def removebuzzword(self, context: Context, *, message: str) -> None:
+    async def removeexample(self, context: Context, *, message: str) -> None:
         training_file = "data/training_data.json"
         
         if not os.path.exists(training_file):
@@ -462,7 +479,7 @@ class Dupes(commands.Cog, name="dupes"):
             json.dump(data, indent=2, fp=f)
         
         embed = discord.Embed(
-            title="✅ Buzzword Removed",
+            title="✅ Example Removed",
             description=f"Removed: {message}",
             color=0x57F287
         )
@@ -477,12 +494,12 @@ class Dupes(commands.Cog, name="dupes"):
         logger.info(f"Removed training example: '{message}'")
 
     @commands.hybrid_command(
-        name="listbuzzwords",
+        name="listexamples",
         description="List all training examples for a category"
     )
     @app_commands.describe(label="Category label to view (0-4, leave empty to view all)")
     @is_potato()
-    async def listbuzzwords(self, context: Context, label: int = None) -> None:
+    async def listexamples(self, context: Context, label: int = None) -> None:
         training_file = "data/training_data.json"
         
         if not os.path.exists(training_file):
@@ -627,14 +644,22 @@ class Dupes(commands.Cog, name="dupes"):
                 inline=False
             )
         
-        # Show ignored channels
+        # seems useless
         ignored = self.config.get("ignored_channels", [])
         ignored_str = ", ".join([f"<#{ch}>" for ch in ignored]) if ignored else "None"
         embed.add_field(name="Ignored Channels", value=ignored_str, inline=False)
         
-        # Show cooldown
+        buzzwords = self.config.get("buzzwords", [])
+        buzz_str = ", ".join(buzzwords) if buzzwords else "None (Checks ALL messages)"
+        embed.add_field(name="Required Buzzwords", value=buzz_str, inline=False)
+
+        # makes it so it shows whatever this is yipiiiii
         cooldown = self.config.get("cooldown_seconds", 60)
+        auto_del = self.config.get("delete_after_seconds", 0)
+        auto_del_str = f"{auto_del} seconds" if auto_del > 0 else "Never"
+        
         embed.add_field(name="Cooldown", value=f"{cooldown} seconds", inline=True)
+        embed.add_field(name="Auto Delete", value=auto_del_str, inline=True)
         
         embed.set_footer(text="If I wasn't too lazy there MIGHT be commands to edit these. If not, edit manually.")
         await context.send(embed=embed)
@@ -749,6 +774,69 @@ class Dupes(commands.Cog, name="dupes"):
                 color=0x57F287
             )
         
+        await context.send(embed=embed)
+
+    @commands.hybrid_command(
+        name="setautodelete",
+        description="Set how long the bot message stays before disappearing forevaa"
+    )
+    @app_commands.describe(seconds="Seconds to wait (0 might mean never delete i think)")
+    @is_potato()
+    async def setautodelete(self, context: Context, seconds: int) -> None:
+        if seconds < 0:
+            await context.send("❌ Can't be negative time, time travel isn't invented yet")
+            return
+            
+        self.config["delete_after_seconds"] = seconds
+        self.save_config()
+        
+        msg = f"✅ Bot messages will now explod after {seconds} seconds" if seconds > 0 else "✅ die is now no more"
+        embed = discord.Embed(description=msg, color=0x57F287)
+        await context.send(embed=embed)
+
+    # pro
+    @commands.hybrid_command(
+        name="addbuzzword",
+        description="Stuff messages have to include for it to get sent to the model"
+    )
+    @app_commands.describe(word="Umm it's a word I guess")
+    @is_potato()
+    async def addbuzzword(self, context: Context, *, word: str) -> None:
+        buzzwords = self.config.get("buzzwords", [])
+        if word in buzzwords:
+            await context.send("❌ That buzzword already exists noob")
+            return
+            
+        buzzwords.append(word)
+        self.config["buzzwords"] = buzzwords
+        self.save_config()
+        
+        embed = discord.Embed(
+            description=f"✅ Added buzzword: `{word}`. Yipii",
+            color=0x57F287
+        )
+        await context.send(embed=embed)
+
+    @commands.hybrid_command(
+        name="removebuzzword",
+        description="Remove a buzzword filter thing"
+    )
+    @app_commands.describe(word="Word to remove")
+    @is_potato()
+    async def removebuzzword(self, context: Context, *, word: str) -> None:
+        buzzwords = self.config.get("buzzwords", [])
+        if word not in buzzwords:
+            await context.send("❌ That buzzword doesn't exist noob")
+            return
+            
+        buzzwords.remove(word)
+        self.config["buzzwords"] = buzzwords
+        self.save_config()
+        
+        embed = discord.Embed(
+            description=f"✅ I hope I removed this from my config: `{word}`",
+            color=0x57F287
+        )
         await context.send(embed=embed)
 
 async def setup(bot) -> None:

@@ -65,13 +65,13 @@ class RockPaperScissors(discord.ui.Select):
 
         winner = (3 + user_choice_index - bot_choice_index) % 3
         if winner == 0:
-            result_embed.description = f"**That's a draw!**\nYou've chosen {user_choice} and I've chosen {bot_choice}."
+            result_embed.description = f"**draw (you still lose tho)**\nyou lost because i said so, we both picked {bot_choice}."
             result_embed.colour = 0xF59E42
         elif winner == 1:
-            result_embed.description = f"**You won!**\nYou've chosen {user_choice} and I've chosen {bot_choice}."
+            result_embed.description = f"**omg omgomgomgomg pro**\nI think I lost to your {user_choice} with my {bot_choice}."
             result_embed.colour = 0x57F287
         else:
-            result_embed.description = f"**You lost!**\nYou've chosen {user_choice} and I've chosen {bot_choice}."
+            result_embed.description = f"**Nooooooooob!**\nShame on you for picking {user_choice} against my {bot_choice}."
             result_embed.colour = 0xE02B2B
 
         await interaction.response.edit_message(
@@ -89,51 +89,23 @@ class Fun(commands.Cog, name="fun"):
     def __init__(self, bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(name="randomfact", description="Get a random fact.")
-    async def randomfact(self, context: Context) -> None:
-        """
-        Get a random fact.
-
-        :param context: The hybrid command context.
-        """
-        # This will prevent your bot from stopping everything when doing a web request - see: https://discordpy.readthedocs.io/en/stable/faq.html#how-do-i-make-a-web-request
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                "https://uselessfacts.jsph.pl/random.json?language=en"
-            ) as request:
-                if request.status == 200:
-                    data = await request.json()
-                    embed = discord.Embed(description=data["text"], color=0xD75BF4)
-                else:
-                    embed = discord.Embed(
-                        title="Error!",
-                        description="There is something wrong with the API, please try again later",
-                        color=0xE02B2B,
-                    )
-                await context.send(embed=embed)
-
     @commands.hybrid_command(
         name="coinflip", description="Worse version of gambling"
     )
     async def coinflip(self, context: Context) -> None:
-        """
-        Make a coin flip, but give your bet before.
-
-        :param context: The hybrid command context.
-        """
         buttons = Choice()
-        embed = discord.Embed(description="Gamble", color=0xBEBEFE)
+        embed = discord.Embed(description=f"\"This is just a shittier version of my coinflipping bot\"\n-Unarming", color=0xBEBEFE)
         message = await context.send(embed=embed, view=buttons)
         await buttons.wait()  # We wait for the user to click a button.
         result = random.choice(["heads", "tails"])
         if buttons.value == result:
             embed = discord.Embed(
-                description=f"Correct! You guessed `{buttons.value}` and I flipped the coin to `{result}`.",
+                description=f"omg pro  it was `{result}`!!",
                 color=0xBEBEFE,
             )
         else:
             embed = discord.Embed(
-                description=f"Woops! You guessed `{buttons.value}` and I flipped the coin to `{result}`, better luck next time!",
+                description=f"noob, it's not `{buttons.value}`, it's `{result}`, let's all point fingers and laugh",
                 color=0xE02B2B,
             )
         await message.edit(embed=embed, view=None, content=None)
@@ -142,13 +114,8 @@ class Fun(commands.Cog, name="fun"):
         name="rps", description="Play the rock paper scissors game against the bot."
     )
     async def rock_paper_scissors(self, context: Context) -> None:
-        """
-        Play the rock paper scissors game against the bot.
-
-        :param context: The hybrid command context.
-        """
         view = RockPaperScissorsView()
-        await context.send("Please make your choice", view=view)
+        await context.send("If the buttons below actually show up I'll be impressed, now go pick!!", view=view)
 
 
 async def setup(bot) -> None:
