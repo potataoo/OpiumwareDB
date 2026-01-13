@@ -7,7 +7,7 @@ import sys
 from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Context
-from utils.checks import is_potato, is_owner_but_better
+from utils.checks import *
 
 logger = logging.getLogger("Potataooo")
 

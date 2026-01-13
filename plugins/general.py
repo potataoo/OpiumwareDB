@@ -6,6 +6,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Context
+from utils.checks import *
 
 
 class FeedbackForm(discord.ui.Modal, title="Feeedback"):
@@ -39,12 +40,6 @@ class General(commands.Cog, name="general"):
     async def remove_spoilers(
         self, interaction: discord.Interaction, message: discord.Message
     ) -> None:
-        """
-        Removes the spoilers from the message. This command requires the MESSAGE_CONTENT intent to work properly.
-
-        :param interaction: The application command interaction.
-        :param message: The message that is being interacted with.
-        """
         spoiler_attachment = None
         for attachment in message.attachments:
             if attachment.is_spoiler():
@@ -63,12 +58,6 @@ class General(commands.Cog, name="general"):
     async def grab_id(
         self, interaction: discord.Interaction, user: discord.User
     ) -> None:
-        """
-        Grabs the ID of the user.
-
-        :param interaction: The application command interaction.
-        :param user: The user that is being interacted with.
-        """
         embed = discord.Embed(
             description=f"The ID of {user.mention} is `{user.id}`.",
             color=0xBEBEFE,
@@ -78,6 +67,7 @@ class General(commands.Cog, name="general"):
     @commands.hybrid_command(
         name="help", description="List all commands the bot has loaded."
     )
+    @cooldown("user", 30)
     async def help(self, context: Context) -> None:
         embed = discord.Embed(
             title="Help", description="List of available commands:", color=0xBEBEFE
@@ -101,6 +91,7 @@ class General(commands.Cog, name="general"):
         name="serverinfo",
         description="Get some useful (or not) information about the server.",
     )
+    @cooldown("user", 10)
     async def serverinfo(self, context: Context) -> None:
         roles = [role.name for role in context.guild.roles]
         num_roles = len(roles)
@@ -127,6 +118,7 @@ class General(commands.Cog, name="general"):
         name="ping",
         description="Check if the bot is alive.",
     )
+    @cooldown("user", 15)
     async def ping(self, context: Context) -> None:
         embed = discord.Embed(
             title="hi",
@@ -139,6 +131,7 @@ class General(commands.Cog, name="general"):
         name="invite",
         description="Join Dupers United",
     )
+    @cooldown("user", 60)
     async def invite(self, context: Context) -> None:
         embed = discord.Embed(
             description=f"Join `Dupers United` [here]({self.bot.invite_link})!",
@@ -189,6 +182,7 @@ class General(commands.Cog, name="general"):
     @app_commands.command(
         name="feedback", description="Submit a feedback for the owners of the bot, just kidding! We probably won't see this."
     )
+    @cooldown("user", 60)
     async def feedback(self, interaction: discord.Interaction) -> None:
         feedback_form = FeedbackForm()
         await interaction.response.send_modal(feedback_form)

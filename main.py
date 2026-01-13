@@ -75,7 +75,6 @@ logger.addHandler(file_handler)
 
 class Potatao(commands.Bot):
     def __init__(self) -> None:
-        # very pro, I love how linux just.. refuses to work because it's case sensitive and windows doesn't like it when it's actually pointing to the correct thingy.
         prefix = os.getenv("PREFIX") or os.getenv("prefix") or "."
         super().__init__(
             command_prefix=commands.when_mentioned_or(prefix),
@@ -85,7 +84,7 @@ class Potatao(commands.Bot):
         self.logger = logger
         self.database = None
         self.bot_prefix = prefix  # Store the actual prefix used
-        self.invite_link = os.getenv("invite") or os.getenv("INVITE") # i love linuc
+        self.invite_link = os.getenv("invite") or os.getenv("INVITE")
 
     # Makes the db work!
     async def init_db(self) -> None:
@@ -148,7 +147,7 @@ class Potatao(commands.Bot):
             except Exception as e:
                 self.logger.error(f"Couldn't send reboot message: {e}")
         else:
-            default_channel_id = os.getenv("default-channel") or os.getenv("DEFAULT_CHANNEL") # how is this only case sensitive on linux
+            default_channel_id = os.getenv("default-channel") or os.getenv("DEFAULT_CHANNEL")
             if default_channel_id:
                 try:
                     channel = await self.fetch_channel(int(default_channel_id))
@@ -203,7 +202,7 @@ class Potatao(commands.Bot):
                 description=f"**I'm not that fast!** - You can use this command again in {f'{round(hours)} hours' if round(hours) > 0 else ''} {f'{round(minutes)} minutes' if round(minutes) > 0 else ''} {f'{round(seconds)} seconds' if round(seconds) > 0 else ''}.",
                 color=0xE02B2B,
             )
-            await context.send(embed=embed)
+            await context.send(embed=embed, delete_after=5)  # dies after 5 seconds nuuuuu
         elif isinstance(error, commands.NotOwner):
             embed = discord.Embed(
                 description="Nuuuuuuuuu!", color=0xE02B2B

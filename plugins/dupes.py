@@ -15,7 +15,7 @@ from discord.ext import commands
 from discord.ext.commands import Context
 from setfit import SetFitModel, SetFitTrainer
 from datasets import Dataset
-from utils.checks import is_potato
+from utils.checks import *
 
 logger = logging.getLogger("Potataooo")
 

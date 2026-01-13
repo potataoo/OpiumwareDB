@@ -4,6 +4,7 @@ import aiohttp
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context
+from utils.checks import *
 
 
 class Choice(discord.ui.View):
@@ -92,6 +93,7 @@ class Fun(commands.Cog, name="fun"):
     @commands.hybrid_command(
         name="coinflip", description="Worse version of gambling"
     )
+    @cooldown("user", 5)
     async def coinflip(self, context: Context) -> None:
         buttons = Choice()
         embed = discord.Embed(description=f"\"This is just a shittier version of my coinflipping bot\"\n-Unarming", color=0xBEBEFE)
@@ -113,6 +115,7 @@ class Fun(commands.Cog, name="fun"):
     @commands.hybrid_command(
         name="rps", description="Play the rock paper scissors game against the bot."
     )
+    @cooldown("user", 5)
     async def rock_paper_scissors(self, context: Context) -> None:
         view = RockPaperScissorsView()
         await context.send("If the buttons below actually show up I'll be impressed, now go pick!!", view=view)

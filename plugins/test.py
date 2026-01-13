@@ -1,5 +1,6 @@
 from discord.ext import commands
 from discord.ext.commands import Context
+from utils.checks import *
 
 class Test(commands.Cog, name="testing"):
     def __init__(self, bot) -> None:
