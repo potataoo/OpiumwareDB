@@ -6,7 +6,9 @@ import warnings
 import time
 import shutil
 import re
+import asyncio
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 
 from discord import app_commands
 from discord.ext import commands
@@ -26,18 +28,34 @@ class Dupes(commands.Cog, name="dupes"):
         self.model = None
         self.model_path = "data/dupe_model"
         self.config_path = "data/dupe_responses.json"
+        self.executor = ThreadPoolExecutor(max_workers=2)  # for async ml stuff
+        self.model_loading = False  # so we know if it's still loading
         
         # tries to load a config if it's even there at all
         self.load_config()
         
-        # tries to find an existing trained model
+        # Load model async so it doesn't block startup
+        asyncio.create_task(self._load_model_async())
+    
+    async def _load_model_async(self):
+        # tries to find an existing trained model (but async now so it's not blocking yipii)
         if os.path.exists(self.model_path):
             try:
-                self.model = SetFitModel.from_pretrained(self.model_path)
+                self.model_loading = True
+                logger.info("Loading model in background...")
+                # Run the blocking model load in thread pool so it doesn't freeze everything
+                loop = asyncio.get_event_loop()
+                self.model = await loop.run_in_executor(
+                    self.executor,
+                    SetFitModel.from_pretrained,
+                    self.model_path
+                )
                 logger.info("Loaded model successfully.")
+                self.model_loading = False
             except Exception as e:
                 logger.error(f"Nunuuuuuuu bad code, couldn't load model because of {e}") # {e} -enough to make a grown girl cry.
                 self.model = None
+                self.model_loading = False
         else:
             logger.warning("No model found. Use .trainmodel to create one") # noob
     
@@ -147,15 +165,19 @@ class Dupes(commands.Cog, name="dupes"):
         # Checks if the message contains specific buzzwords before bothering the model
         buzzwords = self.config.get("buzzwords", [])
         if buzzwords:
-            # a regex or statement, the true top quality compute
-            pattern = "|".join(re.escape(t) for t in buzzwords) 
+            # a regex or statement with WORD BOUNDARIES so "mode" doesn't match "mod" anymore yipii
+            pattern = r'\b(' + '|'.join(re.escape(t) for t in buzzwords) + r')\b'
             # if it doesn't match regex, ignore (i really hope this doesn't come back to haunt me later on)
             if not re.search(pattern, message.content, re.IGNORECASE):
                 return
         
         try:
-            # Predict category (very pro ai stuff)
-            prediction = self.model.predict([message.content])[0]
+            # Predict category (very pro ai stuff) but async now so it doesn't freeze
+            loop = asyncio.get_event_loop()
+            prediction = await loop.run_in_executor(
+                self.executor,
+                lambda: self.model.predict([message.content])[0]
+            )
             # Convert tensor to int if needed
             if hasattr(prediction, 'item'):
                 prediction = prediction.item()
@@ -295,8 +317,16 @@ class Dupes(commands.Cog, name="dupes"):
             
             dataset = Dataset.from_dict({"text": texts, "label": labels})
             
-            # BEWARE!!! confusing stuff below
-            model = SetFitModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+            # BEWARE!!! confusing stuff below (but async now so bot doesn't freeze)
+            loop = asyncio.get_event_loop()
+            
+            # Load base model in thread pool
+            model = await loop.run_in_executor(
+                self.executor,
+                SetFitModel.from_pretrained,
+                "sentence-transformers/all-MiniLM-L6-v2"
+            )
+            
             trainer = SetFitTrainer(
                 model=model,
                 train_dataset=dataset,
@@ -306,11 +336,17 @@ class Dupes(commands.Cog, name="dupes"):
             )
             
             logger.info(f"Starting model training with {epochs} epochs...")
-            trainer.train()
+            
+            # Train in thread pool so it doesn't block the bot
+            await loop.run_in_executor(self.executor, trainer.train)
             
             # Save model
             os.makedirs(self.model_path, exist_ok=True)
-            model.save_pretrained(self.model_path)
+            await loop.run_in_executor(
+                self.executor,
+                model.save_pretrained,
+                self.model_path
+            )
             self.model = model
             
             logger.info("Model training complete!")
@@ -339,15 +375,26 @@ class Dupes(commands.Cog, name="dupes"):
     @is_potato()
     async def getcategory(self, context: Context, *, test_message: str) -> None:
         if self.model is None:
-            embed = discord.Embed(
-                description="❌ Nuuuu no model loaded!! Train one with .trainmodel", # noooooooooob
-                color=0xE02B2B
-            )
+            if self.model_loading:
+                embed = discord.Embed(
+                    description="❌ Model is still loading in background, please have some patience some time, also read rules I guess..",
+                    color=0xFEE75C
+                )
+            else:
+                embed = discord.Embed(
+                    description="❌ Nuuuu no model loaded!! Train one with .trainmodel", # noooooooooob
+                    color=0xE02B2B
+                )
             await context.send(embed=embed)
             return
         
         try:
-            prediction = self.model.predict([test_message])[0]
+            # Don't ask me what this is, I couldn't answer in a million years
+            loop = asyncio.get_event_loop()
+            prediction = await loop.run_in_executor(
+                self.executor,
+                lambda: self.model.predict([test_message])[0]
+            )
             # Convert tensor to int if needed (whar)
             if hasattr(prediction, 'item'):
                 prediction = prediction.item()
@@ -592,7 +639,6 @@ class Dupes(commands.Cog, name="dupes"):
             return user == context.author and str(reaction.emoji) in ["⬅️", "➡️", "❌"] and reaction.message.id == message.id
         
         # Reaction loop (timeout after 3 minutes cuz lazy)
-        import asyncio
         while True:
             try:
                 reaction, user = await self.bot.wait_for("reaction_add", timeout=180.0, check=check)
@@ -690,10 +736,16 @@ class Dupes(commands.Cog, name="dupes"):
     @is_potato()
     async def dupestats(self, context: Context) -> None:
         if self.model is None:
-            embed = discord.Embed(
-                description="❌ No model loaded!",
-                color=0xE02B2B
-            )
+            if self.model_loading:
+                embed = discord.Embed(
+                    description="⏳ Model is still loadingg!!",
+                    color=0xFEE75C
+                )
+            else:
+                embed = discord.Embed(
+                    description="❌ No model loaded!",
+                    color=0xE02B2B
+                )
             await context.send(embed=embed)
             return
         
@@ -838,6 +890,10 @@ class Dupes(commands.Cog, name="dupes"):
             color=0x57F287
         )
         await context.send(embed=embed)
+
+    def cog_unload(self):
+        # I hope I actually use this somewhere..
+        self.executor.shutdown(wait=False)
 
 async def setup(bot) -> None:
     await bot.add_cog(Dupes(bot))

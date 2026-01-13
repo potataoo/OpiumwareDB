@@ -16,14 +16,14 @@
     },
     "addon_request": {
       "title": "Mod Downloads",
-      "description": "Check out our mod downloads channel! It has plenty of things to get you started.",
+      "description": "Check out our mod downloads channel! Most of our mods are also hosted [here](https://mods.dupers.wtf)!",
       "channel_id": 1460631790690767002,
       "channel_text": "Useful Mods",
       "color": 5763719
     },
     "general_help": {
       "title": "Need Help?",
-      "description": "Please read our rules and guides first!\n\n**Guides**\nhttps://dupe.today/",
+      "description": "Please read our rules and guides first!\n\n**Guides**\nhttps://dupe.today/\n**Mods**\nhttps://mods.dupers.wtf/",
       "channel_id": 1460631790690767002,
       "channel_text": "Rules",
       "color": 16705372

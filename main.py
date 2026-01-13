@@ -75,15 +75,17 @@ logger.addHandler(file_handler)
 
 class Potatao(commands.Bot):
     def __init__(self) -> None:
+        # very pro, I love how linux just.. refuses to work because it's case sensitive and windows doesn't like it when it's actually pointing to the correct thingy.
+        prefix = os.getenv("PREFIX") or os.getenv("prefix") or "."
         super().__init__(
-            command_prefix=commands.when_mentioned_or(os.getenv("PREFIX")),
+            command_prefix=commands.when_mentioned_or(prefix),
             intents=intents,
             help_command=None,
         )
         self.logger = logger
         self.database = None
-        self.bot_prefix = os.getenv("prefix") # Pretty sure I could've just used this only in the startup function
-        self.invite_link = os.getenv("invite")
+        self.bot_prefix = prefix  # Store the actual prefix used
+        self.invite_link = os.getenv("invite") or os.getenv("INVITE") # i love linuc
 
     # Makes the db work!
     async def init_db(self) -> None:
@@ -146,7 +148,7 @@ class Potatao(commands.Bot):
             except Exception as e:
                 self.logger.error(f"Couldn't send reboot message: {e}")
         else:
-            default_channel_id = os.getenv("default-channel")
+            default_channel_id = os.getenv("default-channel") or os.getenv("DEFAULT_CHANNEL") # how is this only case sensitive on linux
             if default_channel_id:
                 try:
                     channel = await self.fetch_channel(int(default_channel_id))
