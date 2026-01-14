@@ -19,7 +19,7 @@ from utils.checks import *
 
 logger = logging.getLogger("Potataooo")
 
-# Hide those annoying deprecation warnings (very pro)
+# i love this line
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class Dupes(commands.Cog, name="dupes"):
@@ -64,7 +64,7 @@ class Dupes(commands.Cog, name="dupes"):
             with open(self.config_path, 'r') as f:
                 self.config = json.load(f)
             logger.info("Loaded responses config successfully.")
-        else:
+        else: #no
             # Default config (istg change these channel IDs)
             self.config = {
                 "categories": {

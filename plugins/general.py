@@ -8,6 +8,12 @@ from discord.ext import commands
 from discord.ext.commands import Context
 from utils.checks import *
 
+# i love you git, you always work and never fail
+# never ever have I seen you refuse to upload this file to my repo
+# i mean why would it even do that right? it would never!
+# istg ill dice my neck up if it fails again
+# istg i don't care about your little .gitignores and whatnot
+# i just don't care, let me upload this file
 
 class FeedbackForm(discord.ui.Modal, title="Feeedback"):
     feedback = discord.ui.TextInput(
@@ -123,6 +129,7 @@ class General(commands.Cog, name="general"):
         embed = discord.Embed(
             title="hi",
             description=f"I currently am {round(self.bot.latency * 1000)}ms slow.",
+            #description=f"I currently am {random.choice(["120", "123"])}ms slow.",
             color=0xBEBEFE,
         )
         await context.send(embed=embed)
