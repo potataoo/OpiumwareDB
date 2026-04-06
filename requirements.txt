@@ -2,8 +2,20 @@ discord.py==2.6.3
 python-dotenv
 aiosqlite
 aiohttp
-random
-transformers
+paddleocr
+imagehash
 torch
-hf_xet
-#I'm 90% sure this will definetly be missing some things..
+torchvision
+numpy
+pillow
+imagehash
+timm
+onnxruntime
+onnxscript
+onnx
+fastapi
+uvicorn
+pyjwt
+python-multipart
+# I'm 90% sure this will definetly be missing some things..
+# And I'm too lazy to look for most of these anyway

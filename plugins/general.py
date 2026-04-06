@@ -7,6 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Context
 from utils.checks import *
+from utils.training import *
 
 # i love you git, you always work and never fail
 # never ever have I seen you refuse to upload this file to my repo
@@ -14,6 +15,7 @@ from utils.checks import *
 # istg ill dice my neck up if it fails again
 # istg i don't care about your little .gitignores and whatnot
 # i just don't care, let me upload this file
+# AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 class FeedbackForm(discord.ui.Modal, title="Feeedback"):
     feedback = discord.ui.TextInput(
@@ -129,7 +131,7 @@ class General(commands.Cog, name="general"):
         embed = discord.Embed(
             title="hi",
             description=f"I currently am {round(self.bot.latency * 1000)}ms slow.",
-            #description=f"I currently am {random.choice(["120", "123"])}ms slow.",
+            #description=f"I currently am {random.choice(["120", "123"])}ms slow.", # Yes, I forgot how to get the ping, no I will not be taking the blame.
             color=0xBEBEFE,
         )
         await context.send(embed=embed)
@@ -141,7 +143,7 @@ class General(commands.Cog, name="general"):
     @cooldown("user", 60)
     async def invite(self, context: Context) -> None:
         embed = discord.Embed(
-            description=f"Join `Dupers United` [here]({self.bot.invite_link})!",
+            description=f"Join `Opiumware` [here]({self.bot.invite_link})!",
             color=0xD75BF4,
         )
         try:

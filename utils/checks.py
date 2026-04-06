@@ -13,19 +13,19 @@ def is_potato():
 
 def is_owner_but_better():
     async def predicate(ctx):
-        potatao = 1327710660288708661 # that's me!
+        potatao = 1327710660288708661 # that's me! might actually need to remove this later on or add this to some env
         if await ctx.bot.is_owner(ctx.author) or ctx.author.id == potatao:
             return True
         raise commands.NotOwner("You aren't an owner... and definitely not a better one.")
     return commands.check(predicate)
 
-# Pro cooldown decorator that potatoes bypass yipii
+# Pro cooldown thing I'll probably forget to ever use
 def cooldown(bucket_type: str, seconds: int, rate: int = 1):
     # Some examples for myself so I won't forget
     # bucket_type: "user", "guild", "channel", "everyone", or "role"
     # seconds: how long the cooldown lasts
     # rate: how many uses before cooldown kicks in (default 1)
-    # @cooldown("user", 10)  # 10 second cooldown per user, potatoes bypass
+    # @cooldown("user", 10)  # 10 second cooldown per user
     # @cooldown("everyone", 30, rate=3)  # everyone gets 3 uses per 30 seconds
     bucket_map = {
         "user": commands.BucketType.user,

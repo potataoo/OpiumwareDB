@@ -3,8 +3,14 @@ import logging
 import os
 import asyncio
 from discord.ext import commands
+from discord import app_commands
+from discord.ext.commands import Context
 from datetime import datetime
 from collections import deque
+from utils.checks import *
+
+# also due for a rewrite, output looks messy but I have no idea how to make it look better
+# i will die
 
 class DiscordLogHandler(logging.Handler):
     def __init__(self, bot):
@@ -46,9 +52,11 @@ class DiscordLogHandler(logging.Handler):
         elif level == 'DEBUG':
             emoji = '🔍' # doubt this ever gets used
         elif 'executed' in log_msg.lower() or 'command' in log_msg.lower():
-            emoji = '⚡' # command executed
+            emoji = '⚡' # command executed, 99.5% sure this is broken
         elif 'failed' in log_msg.lower():
             emoji = '❌' # no perms and wtv
+
+            # this did in fact never get used.
         
         # 3 am code ahead
         parts = log_msg.split(' - ', 1)
@@ -143,6 +151,73 @@ class DiscordLogging(commands.Cog, name="logging"):
         if self.discord_handler:
             self.bot.logger.removeHandler(self.discord_handler)
             self.bot.logger.info("Discord logging disabled (nuuuu)")
+
+    @commands.hybrid_command(
+        name="setlogchannel",
+        description="Sets the channel where logs should be sent",
+    )
+    @app_commands.describe(channel="The channel to send logs to")
+    @is_potato()
+    async def setlogchannel(self, context: Context, channel: discord.TextChannel) -> None:
+        # Updates the environment variable thingy
+        os.environ["DEFAULT_CHANNEL"] = str(channel.id)
+        
+        embed = discord.Embed(
+            description=f"Log channel set to {channel.mention}! Logs will go there now yipiiii",
+            color=0x57F287
+        )
+        await context.send(embed=embed)
+        self.bot.logger.info(f"Log channel changed to {channel.name} ({channel.id})")
+
+    @commands.hybrid_command(
+        name="testlog",
+        description="Sends a test log message to check if logging works",
+    )
+    @is_potato()
+    async def testlog(self, context: Context) -> None:
+        self.bot.logger.debug("TestLog Command - DEBUG")
+        self.bot.logger.info("TestLog Command - INFO")
+        self.bot.logger.warning("TestLog Command - WARNING")
+        self.bot.logger.error("TestLog Command - ERROR")
+        self.bot.logger.critical("TestLog Command - CRITICAL")
+        embed = discord.Embed(
+            description="Sent test logs. I think",
+            color=0xBEBEFE
+        )
+        await context.send(embed=embed)
+
+    @commands.hybrid_command(
+        name="loglevel",
+        description="Changes the minimum log level for Discord logging",
+    )
+    @app_commands.describe(level="The log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)")
+    @is_potato()
+    async def loglevel(self, context: Context, level: str) -> None:
+        level = level.upper()
+        valid_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+        
+        if level not in valid_levels:
+            embed = discord.Embed(
+                description=f"noob, use one of these: {', '.join(valid_levels)}",
+                color=0xE02B2B
+            )
+            await context.send(embed=embed)
+            return
+        
+        if self.discord_handler:
+            self.discord_handler.setLevel(getattr(logging, level))
+            embed = discord.Embed(
+                description=f"Log level set to **{level}**! Very pro rite?",
+                color=0x57F287
+            )
+            await context.send(embed=embed)
+            self.bot.logger.info(f"Log level changed to {level}")
+        else:
+            embed = discord.Embed(
+                description="Discord logging isn't enabled... that's weird",
+                color=0xE02B2B
+            )
+            await context.send(embed=embed)
 
 async def setup(bot) -> None:
     await bot.add_cog(DiscordLogging(bot))

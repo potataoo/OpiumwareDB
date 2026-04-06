@@ -15,6 +15,7 @@ from discord.ext import commands, tasks
 from discord.ext.commands import Context
 from dotenv import load_dotenv
 from utils.checks import *
+from plugins.antimrbeast import UnbanMePleaseThanks
 
 from database import DatabaseManager
 
@@ -56,7 +57,8 @@ class LoggingFormatter(logging.Formatter):
 
 
 logger = logging.getLogger("Potataooo")
-logger.setLevel(logging.INFO)
+#logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG) # stuff broke.
 
 # Console handler
 console_handler = logging.StreamHandler()
@@ -116,7 +118,7 @@ class Potatao(commands.Bot):
     # Goes through this list thingy and picks a random status every minute
     @tasks.loop(minutes=1.0)
     async def status_task(self) -> None:
-        statuses = ["Minecraft", "Meteor", "Liquid Bounce", "Duper Panel V4", "Dupe Generator V5", "Hytale"]
+        statuses = ["Opium Overose", "Skidding more sUNC", "Pasting leaked source", "Running away from bytedancer", "CEO @ Palantir", "Removing rats", " Sponsored by https://claude.ai/"]
         await self.change_presence(activity=discord.Game(random.choice(statuses)))
         # This pretty much broke after discord replaced the "Playing <Status>" thingy with
         # The controller icon thingy so now it's weeeeeird
@@ -165,13 +167,17 @@ class Potatao(commands.Bot):
         )
         self.logger.info("-------------------") # This line is critical to the bot, without it, performance drops by 50%
         await self.init_db()
-        await self.load_cogs()
-        self.status_task.start()
+
         self.database = DatabaseManager(
             connection=await aiosqlite.connect(
                 f"{os.path.realpath(os.path.dirname(__file__))}/database/database.db"
             ) # Not deleting this file would be greatly appreciated
-        )
+        )    
+
+        self.add_view(UnbanMePleaseThanks())
+        await self.load_cogs()
+        self.status_task.start()
+
 
     # This thingy runs every time the bot reads a message
     async def on_message(self, message: discord.Message) -> None:

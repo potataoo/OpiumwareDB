@@ -6,6 +6,8 @@ from discord.ext import commands
 from discord.ext.commands import Context
 from utils.checks import *
 
+# 90% sure this was pasted, I was lazy
+
 
 class Choice(discord.ui.View):
     def __init__(self) -> None:

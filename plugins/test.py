@@ -9,10 +9,11 @@ class Test(commands.Cog, name="testing"):
     # This cog is just a template.. doesn't do much..
     @commands.hybrid_command(
         name="testcommand",
-        description="I've no idea why I have this cog loaded..",
+        description="I've no idea why I have this plugin loaded..",
     )
     async def testcommand(self, context: Context) -> None:
         pass
+        # DIE DIE DIE DIE DIE DIE DIE DIE
 
 
 async def setup(bot) -> None:

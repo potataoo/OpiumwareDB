@@ -11,6 +11,8 @@ from utils.checks import *
 
 logger = logging.getLogger("Potataooo")
 
+# due for a rewrite, output looks weird, I hate how the embeds just take up so much space for basic things
+
 class Owner(commands.Cog, name="owner"):
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -26,7 +28,7 @@ class Owner(commands.Cog, name="owner"):
         if scope == "global":
             await context.bot.tree.sync()
             embed = discord.Embed(
-                description="Slash commands have been updated globally yipiiiie",
+                description="Slash commands have been updated globally yipiiiie", # might even make them sync on startup if I actually knew how to..
                 color=0xBEBEFE,
             )
             await context.send(embed=embed)
@@ -73,7 +75,7 @@ class Owner(commands.Cog, name="owner"):
             await context.send(embed=embed)
             return
         embed = discord.Embed(
-            description="The scope must be `global` or `guild`.", color=0xE02B2B
+            description="The scope must be `global` or `guild`. bleh", color=0xE02B2B
         )
         await context.send(embed=embed)
 
@@ -81,7 +83,7 @@ class Owner(commands.Cog, name="owner"):
         name="load",
         description="Load a plugin.",
     )
-    @app_commands.describe(plugin="The name of the cog to load")
+    @app_commands.describe(plugin="The name of the plugin to load")
     @is_potato()
     async def load(self, context: Context, plugin: str) -> None:
         try:
@@ -153,7 +155,7 @@ class Owner(commands.Cog, name="owner"):
     @app_commands.describe(message="The message that should be repeated by the bot")
     @is_potato()
     async def embed(self, context: Context, *, message: str) -> None:
-        embed = discord.Embed(description=message, color=0xBEBEFE)
+        embed = discord.Embed(description=message, color="#FFC5D3")
         await context.send(embed=embed)
 
     @commands.hybrid_command(
@@ -162,12 +164,13 @@ class Owner(commands.Cog, name="owner"):
     )
     @is_potato()
     async def reboot(self, context: Context) -> None:
-        embed = discord.Embed(
-            description="Rebooting... See you in a bit! (◕‿◕)ﻭ",
-            color=0x9C84EF
-        )
-        await context.send(embed=embed)
-        logger.info("Rebooting...")
+        # embed = discord.Embed(
+        #     description="Rebooting... See you in a bit!",
+        #     color=0x9C84EF
+        # ) # didn't remind me of myself enough
+        #await context.send(embed=embed)
+        await context.send("wait i' dying")
+        logger.info("wait i'm dying")
         await self.bot.database.set_reboot_channel(context.channel.id)
         
         # This gets the path to main.py, very pro
@@ -185,7 +188,7 @@ class Owner(commands.Cog, name="owner"):
     @is_owner_but_better()
     async def die(self, context: Context) -> None:
         embed = discord.Embed(
-            description="Goodbye~ (╥﹏╥)",
+            description="Bye hater",
             color=0xE02B2B
         )
         await context.send(embed=embed)
@@ -241,7 +244,6 @@ class Owner(commands.Cog, name="owner"):
         potato_list = []
         for i, user_id in enumerate(potato_ids, start=1):
             user = await self.bot.fetch_user(user_id)
-            # Use display_name if you want their nickname in the server
             member = context.guild.get_member(user.id)
             name = member.display_name if member else user.name
             potato_list.append(f"{i}. {name} | `{user.id}`")
