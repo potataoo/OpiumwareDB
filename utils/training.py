@@ -70,9 +70,9 @@ def loadsomemodel(version: int = None):
         logger.error(f"um i don't knwo how to laod this {e}")
         return None
 
-def predict(session, image_byes: bytes) -> float:
+def predict(session, image_bytes: bytes) -> float:
     try:
-        image = Image.open(io.BytesIO(image_byes)).convert("RGB").resize((256, 256), Image.LANCZOS)
+        image = Image.open(io.BytesIO(image_bytes)).convert("RGB").resize((256, 256), Image.LANCZOS)
         arraywsas = numpy.array(image, dtype=numpy.float32) / 255.0
         arraywsas = (arraywsas - numpy.array([0.485, 0.456, 0.406])) / numpy.array([0.229, 0.224, 0.225])
         inputthing = arraywsas.transpose(2, 0, 1)[numpy.newaxis].astype(numpy.float32)
@@ -122,7 +122,7 @@ def delete_image(filename: str, label: str) -> bool:
 # WARNING: HEAVILY VIBECODED STUFF BELOW
 #
 
-async def train_model(progress_cb: Callable = None) -> dict:
+def train_model(progress_cb: Callable = None) -> dict:
     makesurethedirsarereal()
     pos, neg = whatdoihave()
     if pos + neg < 128:
@@ -130,10 +130,10 @@ async def train_model(progress_cb: Callable = None) -> dict:
 
     if torch.cuda.is_available():
         device = torch.device("cuda")
-        print(f"[antimrbeast] training on CUDA: {torch.cuda.get_device_name(0)}")
+        logger.info(f"[antimrbeast] training on CUDA: {torch.cuda.get_device_name(0)}")
     else:
         device = torch.device("cpu")
-        print("[antimrbeast] no GPU found, training on CPU")
+        logger.info("[antimrbeast] no GPU found, training on CPU")
  
     pos_files = sorted(Path("training_data/positive").glob("*.png"))
     neg_files = sorted(Path("training_data/negative").glob("*.png"))
@@ -225,7 +225,7 @@ async def train_model(progress_cb: Callable = None) -> dict:
                 logger.info(f"Early stopping at epoch {epoch} because val acc hasn't improved in 5 epochs")
                 break
  
-        if progress_cb and epoch % 1 == 0: # i didn't like how it sent updates every 5 epcoshdhsdhkjf
+        if progress_cb:
             elapsed = time.time() - t0
             eta     = (elapsed / epoch) * (EPOCHS - epoch)
             progress_cb(epoch, EPOCHS, avg_loss, train_acc, val_acc, elapsed, eta)

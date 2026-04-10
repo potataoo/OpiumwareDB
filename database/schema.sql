@@ -8,7 +8,9 @@ CREATE TABLE IF NOT EXISTS `default_channel` (
 
 CREATE TABLE IF NOT EXISTS `compromised_accounts` (
   `user_id` varchar(20) NOT NULL UNIQUE,
-  `guild_id` varchar(20) NOT NULL
+  `guild_id` varchar(20) NOT NULL,
+  `unban_at` TIMESTAMP,
+  `dm_message_id` varchar(20)
 );
 
 CREATE TABLE IF NOT EXISTS `scam_hashes` (

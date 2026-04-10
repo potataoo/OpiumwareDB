@@ -16,8 +16,12 @@ from discord import app_commands
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from PIL import Image
+from pathlib import Path
+from datetime import timezone, timedelta
+
 from utils.checks import *
 from utils import training
+
 
 # Okay so huge warning, most of this code barely does anythign
 # Just does checks, does wtv with hashes and other stuff but really
@@ -39,82 +43,6 @@ from utils import training
 
 
 logger = logging.getLogger("Potataooo")
-
-class UnbanMePleaseThanks(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-
-    async def on_error(self, interaction: discord.Interaction, error: Exception, item) -> None:
-        logger.error(f"something broke in the unban button and I have absolutely no idea why: {error}", exc_info=error) # no idea why this works
-        try:
-            if not interaction.response.is_done():
-                await interaction.response.send_message("Something went wrong.. please contact a staff member!", ephemeral=True)
-            else:
-                await interaction.followup.send("Something went wrong but worse.. please contact a staff member!", ephemeral=True)
-        except Exception:
-            pass
-
-
-    @discord.ui.button(
-        label="I've secured my account",
-        emoji="✅",
-        style=discord.ButtonStyle.success,
-        custom_id="unbanmepleasethanksbutitsabuttonactuallyno"
-    )
-    async def confirm_safe(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer()
-
-        try: # trytrytrytrytrytrytrytrytrytrytrytrytrytry
-            cog = interaction.client.get_cog("antimrbeast")
-            if not cog:
-                await interaction.followup.send("Feature seems to be disabled for some reason (broken?) Please contact a staff member thankuu!", ephemeral=True)
-                return
-
-            guild_id = await cog.bot.database.get_compromised_guild(interaction.user.id)
-            if not guild_id:
-                await interaction.followup.send("I don't think ur banned from the server for being compromised I donm't knwooosdfjhksdh", ephemeral=True)
-                return
-
-            guild = cog.bot.get_guild(guild_id)
-            if not guild:
-                await interaction.followup.send("Some random meanie decided it was a good idea to kick me from the serverrrr, can't unban u sorryy", ephemeral=True)
-                return
-        
-            try:
-                banthingy = await guild.fetch_ban(interaction.user)
-                if not banthingy or not banthingy.reason or not banthingy.reason.startswith("Compromised"):
-                    await interaction.followup.send("uuum no thanku", ephemeral=True)
-                    return
-            except discord.NotFound:
-                await cog.bot.database.remove_compromised_account(interaction.user.id)
-                await interaction.followup.send("i don't think ur banned but girl whatever I don't knwo", ephemeral=True)
-                return
-
-            try:
-                await guild.unban(interaction.user, reason="Not compromised anymore apparently")
-            except Exception as e:
-                logger.error(f"u broke somethingsjdkhfsdkjf I don't know how to unban {interaction.user.id} because of {e}")
-                await interaction.followup.send("I couldn't manage to unban you for some reason.. canu please dm a staff member or something", ephemeral=True)
-                return
-        
-            # so many triessdkjfhgsdjfkhd
-
-            await cog.bot.database.remove_compromised_account(interaction.user.id)
-
-            discordinvite = os.getenv("invite")
-            await interaction.followup.send(f"Your account has been unblocked! Please join our server back [here]({discordinvite})")
-
-            button.disabled = True
-            button.label = "Unbanned"
-            await interaction.message.edit(view=self)
-
-            logger.info(f"{interaction.user.id} was unbanned because they're safe nooow yipiiiehfkijsdh")
-        except Exception as e:
-            logger.error(f"something broke in the unban and I have no idea what or why {e}", exc_info=e)
-            try:
-                await interaction.followup.send("Something went reeeeeally wreong canu please contact a staff member?", ephemeral=True)
-            except Exception:
-                pass # I love how many exceptions there are everywhere yet a lot of this is still broken
 
 class YesItsAScamOrActuallyNoItsNotIDontKnow(discord.ui.View):
     def __init__(self, cog, user_id: int, guild_id: int, image_hashes: list[dict], image_file_names: list[str]):
@@ -163,9 +91,13 @@ class YesItsAScamOrActuallyNoItsNotIDontKnow(discord.ui.View):
                 banthisguy = guild.get_member(self.user_id) or discord.Object(id=self.user_id) # not sure which one works
                 await self.cog.bot.database.add_compromised_account(self.user_id, self.guild_id)
                 if isinstance(banthisguy, discord.Member):
-                    await self.cog.tellthatnoobthattheydownloadedabitcoinminer(banthisguy, guild.name)
-                #await guild.ban(banthisguy, reason=f"Compromised Account - Confirmed by {interaction.user.display_name}", delete_message_seconds=60)
-                await guild.ban(banthisguy, reason=f"Compromised Account - Confirmed by {interaction.user.display_name}", delete_message_days=0)
+                    whenunban = discord.utils.utcnow() + timedelta(hours=1)
+                    await self.cog.bot.database.set_unban_at(self.user_id, whenunban)
+                    dm = await self.cog.tellthatnoobthattheydownloadedabitcoinminer(banthisguy, guild.name)
+                    if dm:
+                        await self.cog.database.set_dm_message_id(self.user_id, dm.id)
+                await guild.ban(banthisguy, reason=f"Compromised Account - Confirmed by {interaction.user.display_name}", delete_message_seconds=60)
+                #await guild.ban(banthisguy, reason=f"Compromised Account - Confirmed by {interaction.user.display_name}", delete_message_days=0)
         except Exception as e:
             logger.error(f"Yet another error noob so um fix this, this time it has to do with the mods not being able to ban a user or wtv {e}")
 
@@ -232,8 +164,6 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
         self.semaphore = asyncio.Semaphore(4) # all this does is just set limits and add more workers or wtv so it uses ur pc more
 
     async def cog_load(self):
-        self.bot.add_view(UnbanMePleaseThanks())
-
         training.makesurethedirsarereal()
         await self.loadscamhashesfromyourwhatever()
         woah = asyncio.get_event_loop()
@@ -241,12 +171,14 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
         if self.model_session:
             self.model_version = training.newestmodelversion()
         self.cleaneverything.start()
+        self.unbanmethanks.start()
         positives, negatives = training.whatdoihave()
         
         logger.info(f"Okay so I have v{self.model_version} of the model and it is {'ready' if self.model_session else 'BROKENSKDFJHSDF'}! I also have {positives} positive and {negatives} images that I know of")
 
     async def cog_unload(self): # not sure if it's really ever going to be unloaded tho
         self.cleaneverything.cancel()
+        self.unbanmethanks.cancel()
         self.executor.shutdown(wait=False)
 
     @tasks.loop(hours=1)
@@ -267,6 +199,49 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
         except Exception as e:
             logger.error(f"Cleanup thingy blew up {e}")
 
+    @tasks.loop(minutes=1)
+    async def unbanmethanks(self):
+        try:
+            when = await self.bot.database.get_unban_timehrs()
+            for usersid, guildsid, dm_message_id in when:
+                userid = int(usersid)
+                guildid = int(guildsid)
+                try:
+                    guild = self.bot.get_guild(guildid) or await self.bot.fetch_guild(guildid) # not sure which one works, neither of them are consistent
+                    if guild:
+                        await guild.unban(discord.Object(id=userid), reason="Unbanning this compromised account because why not")
+                    await self.bot.database.remove_compromised_account(userid)
+                    if dm_message_id:
+                        try:
+                            discordinvite = os.getenv("invite")
+                            user = await self.bot.fetch_user(userid)
+                            channel = await user.create_dm()
+                            message = await channel.fetch_message(int(dm_message_id))
+                            embed = discord.Embed(
+                                title = ":warning: Account Compromised?",
+                                description=(
+                                    f"Okay so um hii {user.display_name}..\n\n"
+                                    "I'll probably just get straight to the point and tell you that your account might be compromised.\n"
+                                    "If you're **100%** sure that you and your system is safe, then please read what's below.\n\n"
+                                    "I've seen you send something which looked like scam images and I just don't want that in our server.\n"
+                                    f"That's why I've temporarily banned you. But for now I need you to do this:\n"
+                                    "1. Change ALL of your passwords for ALL of your accounts (Takes a day, saves your life)\n"
+                                    "2. Reset your system, malware tends to stay on it even after your accounts get stolen.\n"
+                                    "3. Please never trust random links/scripts/applications sent by people you don't trust.\n"
+                                    "4. And as always, take everything on the internet with a pinch of salt.\n\n"
+                                    f"That being said, you are now unbanned, please join using this link:"
+                                    f"{discordinvite}"
+                                ),
+                                color=0xFFC5D3
+                            )
+                            await message.edit(embed=embed)
+                        except Exception:
+                            pass # i give up, this is just hell, i  do NOT need 50 try thingies in 1 function for a bot which is only going to be used in 1 place and everything can be hardcoded
+                except Exception as e:
+                    logger.error(f"forgot how to unban {userid} because of {e}")
+        except Exception as e:
+            logger.error(f"Unban task loop exploded {e}")
+
     async def loadscamhashesfromyourwhatever(self):
         try:
             hashthings = await self.bot.database.get_all_scam_hashes()
@@ -275,6 +250,21 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
                     self.known_hashes[algo].add(imagehash.hex_to_hash(hash)) # top tier grade military technology encryption
         except Exception as e:
             logger.error(f"ur db broke again nooob bleh {e}")
+
+        try:
+            woah = asyncio.get_event_loop()
+            for imagepath in Path("training_data/positive").glob("*.png"):
+                try:
+                    data = imagepath.read_bytes()
+                    hashthing = await woah.run_in_executor(self.executor, self.thinkofahash, data)
+                    if hashthing:
+                        for algo, hash in hashthing.items():
+                            if hash is not None and algo != "chash": # this will either make everything work way better or break the point of theb bot
+                                self.known_hashes[algo].add(hash)
+                except Exception:
+                    pass
+        except Exception as e:
+            logger.error(f"i can't load hash stuff from my training stuff {e}")
 
     async def retrainbutcool(self):
         positives, negatives = training.whatdoihave()
@@ -316,11 +306,12 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
         self.last_seen[author.id] = now # no idea why this is like that too lazy to fix or remove
 
         if last_seen is None:
-            return
-        
-        daysbutpro = (now - last_seen).days
-        if daysbutpro < 0: # don't forget to change me later on or I'd get almost everyone banned okay thasnks (0 for testing and the 3 was saba's reomcendadsrf)
-            return
+            # FIXME okay thanks
+            daysbutpro = 0 # top 10 bandaid fixes which will defo not go wrong
+        else:
+            daysbutpro = (now - last_seen).days
+            if daysbutpro < 0: # don't forget to change me later on or I'd get almost everyone banned okay thasnks (0 for testing and the 3 was saba's reomcendadsrf)
+                return
         
         image_count = sum(1 for attachment in message.attachments if attachment.content_type and attachment.content_type.startswith("image/"))
 
@@ -480,29 +471,48 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
             pass # I'm honestly so so so so SO SO SOIASFJHGSBDFKJ SO sick of these try: and except Exception thingies I will cry
 
         try:
+            unban_at = discord.utils.utcnow() + timedelta(minutes=1) # please do change this to hours=1 after debugging i guess
             await self.bot.database.add_compromised_account(message.author.id, message.guild.id)
-            await self.tellthatnoobthattheydownloadedabitcoinminer(message.author, message.guild.name)
-            #await message.guild.ban(message.author, reason=reason, delete_message_seconds=60)
-            await message.guild.ban(message.author, reason=reason, delete_message_days=0)
-            logger.info(f"Banned some random mrbeast probably I think I don't knwoo {message.author} ({message.author.id}) because they um {reason}")
+            await self.bot.database.set_unban_at(message.author.id, unban_at)
+            dm = await self.tellthatnoobthattheydownloadedabitcoinminer(message.author, message.guild.name, unban_at)
+            if dm:
+                await self.bot.database.set_dm_message_id(message.author.id, dm.id)
+            await message.guild.ban(message.author, reason=reason, delete_message_seconds=60)
+            #await message.guild.ban(message.author, reason=reason, delete_message_days=0)
+            #logger.info(f"Banned some random mrbeast probably I think I don't knwoo {message.author} ({message.author.id}) because they um {reason}")
         except Exception as e:
             logger.error(f"I don't know how to ban them because of {e} so umm yea they'll stay but they are {message.author} ({message.author.id})")
             return
         
         self.last_seen.pop(message.author.id, None)
-        logger.warning(f"Managed to ban some random account yippiee! {message.author} ({message.author.id}) in #{message.channel.name} for {reason}")
+        logger.info(f"Managed to ban some random account yippiee! {message.author} ({message.author.id}) in #{message.channel.name} for {reason}")
 
     async def getlastseenfrommessagehistoryorsomething(self, message: discord.Message) -> datetime | None:
         try:
-            async for msg in message.channel.history(limit=10, before=message.created_at):
+            async for msg in message.channel.history(limit=50, before=message.created_at):
                 if msg.author.id == message.author.id:
                     logger.debug(f"Managed to find some messages from {message.author.id} in the search thingy")
                     return msg.created_at
-        except Exception as e:
+        except Exception:
             logger.error(f"I didn't know how how to search for messages")
-            return None
+            pass
+        try:
+            for channel in message.guild.text_channels:
+                if channel.id == message.channel.id:
+                    continue
+                try:
+                    async for msg in channel.history(limit=10):
+                        if msg.author.id == message.author.id:
+                            logger.debug(f"ound {message.author.id} in #{channel.name} woah")
+                            return msg.created_at
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        return None
 
-    async def tellthatnoobthattheydownloadedabitcoinminer(self, user: discord.User, guild_name: str):
+    async def tellthatnoobthattheydownloadedabitcoinminer(self, user: discord.User, guild_name: str, unban_at: datetime) -> discord.Message | None:
+        whenwilligetunbanned = int(unban_at.timestamp())
         embed = discord.Embed(
             title = ":warning: Account Compromised?",
             description=(
@@ -510,17 +520,18 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
                 "I'll probably just get straight to the point and tell you that your account might be compromised.\n"
                 "If you're **100%** sure that you and your system is safe, then please read what's below.\n\n"
                 "I've seen you send something which looked like scam images and I just don't want that in our server.\n"
-                f"That's why I've banned you from **{guild_name}**, but for now I need you to do this:\n"
+                f"That's why I've temporarily banned you from **{guild_name}**, but for now I need you to do this:\n"
                 "1. Change ALL of your passwords for ALL of your accounts (Takes a day, saves your life)\n"
                 "2. Reset your system, malware tends to stay on it even after your accounts get stolen.\n"
                 "3. Please never trust random links/scripts/applications sent by people you don't trust.\n"
                 "4. And as always, take everything on the internet with a pinch of salt.\n\n"
-                f"That being said, you can unban yourself from {guild_name} by clicking the button below."
+                f"That being said, you will be unbanned from {guild_name} <t:{whenwilligetunbanned}:R> (<t:{whenwilligetunbanned}:T>)."
             ),
             color=0xFFC5D3
         )
         try:
-            await user.send(embed=embed, view=UnbanMePleaseThanks())
+            message = await user.send(embed=embed) # ididididid
+            return message
         except discord.Forbidden:
             logger.info(f"Well um.. Not much of anything we could do about that.. {user.display_name} has their DMs closed so I couldn't send them their only change to get unbanned nooo")
 

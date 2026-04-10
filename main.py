@@ -15,7 +15,6 @@ from discord.ext import commands, tasks
 from discord.ext.commands import Context
 from dotenv import load_dotenv
 from utils.checks import *
-from plugins.antimrbeast import UnbanMePleaseThanks
 
 from database import DatabaseManager
 
@@ -174,7 +173,6 @@ class Potatao(commands.Bot):
             ) # Not deleting this file would be greatly appreciated
         )    
 
-        self.add_view(UnbanMePleaseThanks())
         await self.load_cogs()
         self.status_task.start()
 

@@ -64,7 +64,7 @@ class DatabaseManager:
     # hi mr beast im a big fan
     async def add_compromised_account(self, user_id: int, guild_id: int) -> None:
         await self.connection.execute(
-            "INSERT OR REPLACE INTO compromised_accounts (user_id, guild_id) VALUES (?, ?)",
+            "INSERT OR IGNORE INTO compromised_accounts (user_id, guild_id) VALUES (?, ?)",
             (str(user_id), str(guild_id))
         )
         await self.connection.commit()
@@ -141,5 +141,26 @@ class DatabaseManager:
         )
         async with rows as cursor:
             return await cursor.fetchall()
+        
+    async def set_unban_at(self, user_id: int, unban_at) -> None:
+        await self.connection.execute(
+            "UPDATE compromised_accounts SET unban_at = ? WHERE user_id = ?",
+            (unban_at.strftime('%Y-%m-%d %H:%M:%S'), str(user_id))
+        )
+        await self.connection.commit()
+    
+    async def get_unban_timehrs(self) -> list[tuple[str, str, str | None]]: # woah
+        rows = await self.connection.execute(
+            "SELECT user_id, guild_id, dm_message_id FROM compromised_accounts WHERE unban_at IS NOT NULL AND unban_at <= datetime('now')"
+        )
+        async with rows as cursor:
+            return await cursor.fetchall()
+        
+    async def set_dm_message_id(self, user_id: int, message_id: int) -> None:
+        await self.connection.execute(
+            "UPDATE compromised_accounts SET dm_message_id = ? WHERE user_id = ?",
+            (str(message_id), str(user_id))
+        )
+        await self.connection.commit()
 
 # Yes, all of this could be WAY better and WAY faster, but I'm just lazy
