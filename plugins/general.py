@@ -95,7 +95,7 @@ class General(commands.Cog, name="general"):
             )
         await context.send(embed=embed)
 
-    @commands.hybrid_command(
+    @commands.hybrid_command( # i don't remember writing anything below
         name="serverinfo",
         description="Get some useful (or not) information about the server.",
     )
@@ -136,21 +136,23 @@ class General(commands.Cog, name="general"):
         )
         await context.send(embed=embed)
 
-    @commands.hybrid_command(
-        name="invite",
-        description="Join Dupers United",
-    )
-    @cooldown("user", 60)
-    async def invite(self, context: Context) -> None:
-        embed = discord.Embed(
-            description=f"Join `Opiumware` [here]({self.bot.invite_link})!",
-            color=0xD75BF4,
-        )
-        try:
-            await context.author.send(embed=embed)
-            await context.send("I sent you a private message I think")
-        except discord.Forbidden:
-            await context.send(embed=embed)
+    # this was useless either way
+
+    # @commands.hybrid_command(
+    #     name="invite",
+    #     description="Join our community!", # bleeeeeeeeh
+    # )
+    # @cooldown("user", 60)
+    # async def invite(self, context: Context) -> None:
+    #     embed = discord.Embed(
+    #         description=f"Join us [here]({self.bot.invite_link})!",
+    #         color=0xD75BF4,
+    #     )
+    #     try:
+    #         await context.author.send(embed=embed)
+    #         await context.send("I sent you a private message I think")
+    #     except discord.Forbidden:
+    #         await context.send(embed=embed)
 
     @commands.hybrid_command(
         name="8ball",

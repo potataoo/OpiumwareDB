@@ -10,8 +10,6 @@ ENV/
 env.bak/
 venv.bak/
 checkpoints/
-training_data/
-data/dupe_model/
 *.pt
 *.pth
 *.bin

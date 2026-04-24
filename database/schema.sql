@@ -43,3 +43,11 @@ CREATE TABLE IF NOT EXISTS `model_versions` (
   `created_by` varchar(20),
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS `sticky_messages` (
+  `channel_id` varchar(20) NOT NULL UNIQUE,
+  `message` TEXT NOT NULL,
+  `set_by` varchar(20),
+  `set_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `last_message_id` varchar(20)
+)

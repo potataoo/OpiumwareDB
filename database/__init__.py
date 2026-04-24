@@ -163,4 +163,67 @@ class DatabaseManager:
         )
         await self.connection.commit()
 
+    # sticky message thingies
+
+    async def set_sticky_message(self, channel_id: int, message: str, set_by: int, last_message_id: int) -> None:
+        await self.connection.execute(
+            "INSERT INTO sticky_messages (channel_id, message, set_by, last_message_id) VALUES (?, ?, ?, ?) ON CONFLICT(channel_id) DO UPDATE SET message = excluded.message, set_by = excluded.set_by, set_at = CURRENT_TIMESTAMP, last_message_id = excluded.last_message_id",
+            (str(channel_id), message, str(set_by), str(last_message_id))
+        )
+        await self.connection.commit()
+
+    async def get_sticky_message(self, channel_id: int) -> str | None:
+        async with self.connection.execute(
+            "SELECT message FROM sticky_messages WHERE channel_id = ?",
+            (str(channel_id),)
+        ) as cursor:
+            result = await cursor.fetchone()
+            return result[0] if result else None
+        
+    async def get_sticky_full(self, channel_id: int) -> tuple | None: # tupletupletuple they're so ueselsasdkfhs
+        async with self.connection.execute(
+            "SELECT message, set_by, set_at FROM sticky_messages WHERE channel_id = ?",
+            (str(channel_id),)
+        ) as cursor:
+            return await cursor.fetchone()
+        
+    async def get_sticky_data(self, channel_id: int) -> dict | None: # istg why do I even need like 50 functions to get the same datgjuhdsfgkjd
+        async with self.connection.execute(
+            "SELECT message, set_by, set_at, last_message_id FROM sticky_messages WHERE channel_id = ?",
+            (str(channel_id),)
+        ) as cursor:
+            result = await cursor.fetchone()
+            if not result:
+                return None
+            return {
+                "message": result[0],
+                "set_by": result[1],
+                "set_at": result[2],
+                "last_message_id": int(result[3]) if result[3] else None
+            }
+        
+    async def get_sticky_last_message_id(self, channel_id: int) -> int | None:
+        async with self.connection.execute(
+            "SELECT last_message_id FROM sticky_messages WHERE channel_id = ?",
+            (str(channel_id),)
+        ) as cursor:
+            result = await cursor.fetchone()
+            return int(result[0]) if result and result[0] else None
+        
+    async def update_sticky_last_message(self, channel_id: int, message_id: int) -> None:
+        await self.connection.execute(
+            "UPDATE sticky_messages SET last_message_id = ? WHERE channel_id = ?",
+            (str(message_id), str(channel_id))
+        )
+        await self.connection.commit()
+
+    async def remove_sticky_message(self, channel_id: int) -> None:
+        await self.connection.execute(
+            "DELETE FROM sticky_messages WHERE channel_id = ?",
+            (str(channel_id),)
+        )
+        await self.connection.commit()
+
+
+
 # Yes, all of this could be WAY better and WAY faster, but I'm just lazy
