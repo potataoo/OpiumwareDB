@@ -1,22 +1,15 @@
-import torch
-import torch.nn
-import torchvision.transforms
 import random
 import time
-import timm
 import io
 import logging
 import uuid
 import shutil #dkjh
-
 import numpy
 import onnxruntime
 
-from torch.utils.data import Dataset, DataLoader
 from pathlib import Path
 from PIL import Image
 from typing import Callable, Optional
-from onnxruntime.quantization import quantize_dynamic, QuantType
 
 logger = logging.getLogger("Potataooo")
 
@@ -74,6 +67,7 @@ def predict(session, image_bytes: bytes) -> float:
     try:
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB").resize((256, 256), Image.LANCZOS)
         arraywsas = numpy.array(image, dtype=numpy.float32) / 255.0
+        image.close() # this will either break or fix somde memory leakdgfkjhsdf
         arraywsas = (arraywsas - numpy.array([0.485, 0.456, 0.406])) / numpy.array([0.229, 0.224, 0.225])
         inputthing = arraywsas.transpose(2, 0, 1)[numpy.newaxis].astype(numpy.float32)
         output = session.run(None, {session.get_inputs()[0].name: inputthing})[0]
@@ -89,7 +83,10 @@ def save_image(image_bytes: bytes, label: str) -> Optional[str]:
     try:
         makesurethedirsarereal()
         filename = f"{uuid.uuid4()}.png"
-        Image.open(io.BytesIO(image_bytes)).convert("RGB").save(f"training_data/{label}/{filename}", "PNG")
+        #Image.open(io.BytesIO(image_bytes)).convert("RGB").save(f"training_data/{label}/{filename}", "PNG")
+        image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        image.save(f"training_data/{label}/{filename}", "PNG")
+        image.close() #n nooo
         return filename
     except Exception as e:
         logger.error(f"i don't knwo how to save images or ur disk is stupid {e}")
@@ -123,6 +120,14 @@ def delete_image(filename: str, label: str) -> bool:
 #
 
 def train_model(progress_cb: Callable = None) -> dict:
+    import torch
+    import torch.nn
+    import torchvision.transforms
+    import timm
+
+    from torch.utils.data import Dataset, DataLoader
+    from onnxruntime.quantization import quantize_dynamic, QuantType
+
     makesurethedirsarereal()
     pos, neg = whatdoihave()
     if pos + neg < 128:

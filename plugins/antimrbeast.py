@@ -85,19 +85,27 @@ class YesItsAScamOrActuallyNoItsNotIDontKnow(discord.ui.View):
         except Exception as e:
             logger.error(f"Okay so I don't know how to make it move the image and do the label tyhing because of {e}")
 
+        guild = self.cog.bot.get_guild(self.guild_id)
+        if not guild:
+            logger.error(f"I somehow couldn't even find the {self.guild_id} server to ban {self.user_id}")
+            return
+        
+        banthisguy = guild.get_member(self.user_id) or discord.Object(id=self.user_id) # not sure which one works
+
+        try:            
+            await guild.ban(banthisguy, reason=f"Compromised Account - Confirmed by {interaction.user.display_name}", delete_message_seconds=60)
+        except Exception as e:
+            logger.error(f"The ban button somehow died and couldn't ban {self.user_id} because of {e}")
+            return
+
         try:
-            guild = self.cog.bot.get_guild(self.guild_id)
-            if guild:
-                banthisguy = guild.get_member(self.user_id) or discord.Object(id=self.user_id) # not sure which one works
-                await self.cog.bot.database.add_compromised_account(self.user_id, self.guild_id)
-                if isinstance(banthisguy, discord.Member):
-                    whenunban = discord.utils.utcnow() + timedelta(hours=1)
-                    await self.cog.bot.database.set_unban_at(self.user_id, whenunban)
-                    dm = await self.cog.tellthatnoobthattheydownloadedabitcoinminer(banthisguy, guild.name)
-                    if dm:
-                        await self.cog.database.set_dm_message_id(self.user_id, dm.id)
-                await guild.ban(banthisguy, reason=f"Compromised Account - Confirmed by {interaction.user.display_name}", delete_message_seconds=60)
-                #await guild.ban(banthisguy, reason=f"Compromised Account - Confirmed by {interaction.user.display_name}", delete_message_days=0)
+            await self.cog.bot.database.add_compromised_account(self.user_id, self.guild_id)
+            whenunban = discord.utils.utcnow() + timedelta(hours=1)
+            await self.cog.bot.database.set_unban_at(self.user_id, whenunban)
+            if isinstance(banthisguy, discord.Member):
+                dm = await self.cog.tellthatnoobthattheydownloadedabitcoinminer(banthisguy, guild.name, whenunban)
+                if dm:
+                    await self.cog.bot.database.set_dm_message_id(self.user_id, dm.id) # i forgot
         except Exception as e:
             logger.error(f"Yet another error noob so um fix this, this time it has to do with the mods not being able to ban a user or wtv {e}")
 
@@ -162,6 +170,9 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
         self.recent_hashes: dict[str, tuple[datetime, int]] = {}
         self.executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="antimrbeast") # EXECUTOR OMG OMGOMGOMGODFNMGKDFNGKDFJNG AAAAASJFHSDJFLKHB
         self.semaphore = asyncio.Semaphore(4) # all this does is just set limits and add more workers or wtv so it uses ur pc more
+        self.donttrainme = asyncio.Lock()
+        self.hash_thresholds = {"phash": 10, "dhash": 10, "ahash": 10, "chash": 3}
+        self.modchannelidthing = None
 
     async def cog_load(self):
         training.makesurethedirsarereal()
@@ -181,12 +192,18 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
         self.unbanmethanks.cancel()
         self.executor.shutdown(wait=False)
 
-    @tasks.loop(hours=1)
+    # i think this should be even better for the memory thingy tho i don't think it really even matters
+    @tasks.loop(minutes=1)
     async def cleaneverything(self):
         now = discord.utils.utcnow()
         self.recent_hashes = { # what am i reading I did NOT write this what what is this
             something: hash for something, hash in self.recent_hashes.items()
             if (now - hash[0]).total_seconds() < 60
+        }
+
+        self.last_seen = {
+            userthingy: seen for userthingy, seen in self.last_seen.items() # poetry
+            if (now - seen).days < 7
         }
 
         try:
@@ -208,9 +225,21 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
                 guildid = int(guildsid)
                 try:
                     guild = self.bot.get_guild(guildid) or await self.bot.fetch_guild(guildid) # not sure which one works, neither of them are consistent
-                    if guild:
+                    if not guild:
+                        logger.error(f"whar where is the {guildid} guild because i need to unban {userid} and it brokee")
+                        continue
+
+                    try:
                         await guild.unban(discord.Object(id=userid), reason="Unbanning this compromised account because why not")
+                    except discord.NotFound:
+                        # in other words the bot somehow managed to fail to ban them but still put them in the db but i have no idea what may be causing this
+                        logger.warning(f"so um {userid} wasn't banned (my db probably got confused but they're probably fine, i think u can ignore this)")
+                    except discord.Forbidden:
+                        logger.warning(f"i don't think i have perms to unban {userid} in {guildid} noooooooo")
+                        continue
+
                     await self.bot.database.remove_compromised_account(userid)
+
                     if dm_message_id:
                         try:
                             discordinvite = os.getenv("invite")
@@ -238,6 +267,7 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
                         except Exception:
                             pass # i give up, this is just hell, i  do NOT need 50 try thingies in 1 function for a bot which is only going to be used in 1 place and everything can be hardcoded
                 except Exception as e:
+                    # bleeeeeeeeeh
                     logger.error(f"forgot how to unban {userid} because of {e}")
         except Exception as e:
             logger.error(f"Unban task loop exploded {e}")
@@ -267,23 +297,28 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
             logger.error(f"i can't load hash stuff from my training stuff {e}")
 
     async def retrainbutcool(self):
-        positives, negatives = training.whatdoihave()
-
-        if positives + negatives < 128:
-            logger.info(f"Okii so um I was going to retrain the model thingy thing but I only have {positives + negatives}/128 examples so no thanku")
+        if self.donttrainme.locked():
+            logger.info("I' already training myself I think so I won't train the model again nooo")
             return
-        logger.info(f"Decided it was a good idea to start training myself yet again because I have {positives + negatives} examples (Pro - {positives}, Noob - {negatives})")
-        try:
-            woah = asyncio.get_event_loop()
-            result = await woah.run_in_executor(self.executor, training.train_model)
-            newmodelbecause = await woah.run_in_executor(None, training.loadsomemodel, result['version'])
-            if newmodelbecause:
-                self.model_session = newmodelbecause
-                self.model_version = result["version"]
-                await self.bot.database.add_model_version(result['version'], result['accuracy'], result['train_n'], result['n'], result['positives'], result['negatives'], "auto")
-                logger.info(f"Wooooooooahh I upgraded to v{result['version']} noow! And apparently my accuracy is {result['accuracy']} but I took {result['elapsed']:.2f} seconds")
-        except Exception as e:
-            logger.error(f"okay so u don't know how to make it automatically do stuff noob {e}")
+        
+        async with self.donttrainme:
+            positives, negatives = training.whatdoihave()
+
+            if positives + negatives < 128:
+                logger.info(f"Okii so um I was going to retrain the model thingy thing but I only have {positives + negatives}/128 examples so no thanku")
+                return
+            logger.info(f"Decided it was a good idea to start training myself yet again because I have {positives + negatives} examples (Pro - {positives}, Noob - {negatives})")
+            try:
+                woah = asyncio.get_event_loop()
+                result = await woah.run_in_executor(self.executor, training.train_model)
+                newmodelbecause = await woah.run_in_executor(None, training.loadsomemodel, result['version'])
+                if newmodelbecause:
+                    self.model_session = newmodelbecause
+                    self.model_version = result["version"]
+                    await self.bot.database.add_model_version(result['version'], result['accuracy'], result['train_n'], result['n'], result['positives'], result['negatives'], "auto")
+                    logger.info(f"Wooooooooahh I upgraded to v{result['version']} noow! And apparently my accuracy is {result['accuracy']} but I took {result['elapsed']:.2f} seconds")
+            except Exception as e:
+                logger.error(f"okay so u don't know how to make it automatically do stuff noob {e}")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -298,6 +333,11 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
             self.last_seen[author.id] = now
             return
                 
+        image_count = sum(1 for attachment in message.attachments if attachment.content_type and attachment.content_type.startswith("image/"))
+        if image_count < 2:
+            self.last_seen[author.id] = now
+            return
+
         last_seen = self.last_seen.get(author.id)
 
         if last_seen is None:
@@ -312,11 +352,6 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
             daysbutpro = (now - last_seen).days
             if daysbutpro < 0: # don't forget to change me later on or I'd get almost everyone banned okay thasnks (0 for testing and the 3 was saba's reomcendadsrf)
                 return
-        
-        image_count = sum(1 for attachment in message.attachments if attachment.content_type and attachment.content_type.startswith("image/"))
-
-        if image_count < 2:
-            return
 
         async with self.semaphore:
             await self.scanthisnoobsmessage(message, image_count, daysbutpro)
@@ -371,8 +406,7 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
 
                     self.recent_hashes[hashthingy] = (now, message.channel.id)
 
-                    hashthrestholds = {"phash": 10, "dhash": 10, "ahash": 10, "chash": 3}
-                    if any(abs(hash - iknowthis) <= hashthrestholds.get(algo, 10) for iknowthis in self.known_hashes[algo]):
+                    if any(abs(hash - iknowthis) <= self.HASH_THRESHOLDS.get(algo, 10) for iknowthis in self.known_hashes[algo]):
                         hashfound = True
 
                 hashes.append(hashthingies)
@@ -401,12 +435,14 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
     def thinkofahash(self, imagebytes: bytes) -> dict | None:
         try:
             image = Image.open(io.BytesIO(imagebytes)).convert("RGB")
-            return {
+            result = {
                 "phash": imagehash.phash(image),
                 "dhash": imagehash.dhash(image),
                 "ahash": imagehash.average_hash(image),
                 "chash": imagehash.colorhash(image, binbits=3)
             }
+            image.close()
+            return result
         except Exception:
             return None
 
@@ -414,12 +450,14 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
         defaultchannel = os.getenv("antimrbeastchannel")
         if not defaultchannel:
             return
-        
-        try:
-            channel = await self.bot.fetch_channel(int(defaultchannel))
-        except Exception:
-            logger.error("I don't knwo but the mrbeast channel is die or something")
-            return
+
+        if self.modchannelidthing is None:
+            try:
+                self._mod_channel = await self.bot.fetch_channel(int(defaultchannel))
+            except Exception:
+                logger.error("I don't knwo but the mrbeast channel is die or something")
+                return
+        channel = self.modchannelidthing
         
         try:
             await message.delete()
@@ -471,18 +509,23 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
             pass # I'm honestly so so so so SO SO SOIASFJHGSBDFKJ SO sick of these try: and except Exception thingies I will cry
 
         try:
+            await message.guild.ban(message.author, reason=reason, delete_message_seconds=60)
+        except Exception as e:
+            logger.error(f"I somehow FAILED to ban this: {message.author} because of {e}")
+            return
+
+        try:
             unban_at = discord.utils.utcnow() + timedelta(minutes=1) # please do change this to hours=1 after debugging i guess
             await self.bot.database.add_compromised_account(message.author.id, message.guild.id)
             await self.bot.database.set_unban_at(message.author.id, unban_at)
             dm = await self.tellthatnoobthattheydownloadedabitcoinminer(message.author, message.guild.name, unban_at)
             if dm:
                 await self.bot.database.set_dm_message_id(message.author.id, dm.id)
-            await message.guild.ban(message.author, reason=reason, delete_message_seconds=60)
+            #await message.guild.ban(message.author, reason=reason, delete_message_seconds=60)
             #await message.guild.ban(message.author, reason=reason, delete_message_days=0)
             #logger.info(f"Banned some random mrbeast probably I think I don't knwoo {message.author} ({message.author.id}) because they um {reason}")
         except Exception as e:
             logger.error(f"I don't know how to ban them because of {e} so umm yea they'll stay but they are {message.author} ({message.author.id})")
-            return
         
         self.last_seen.pop(message.author.id, None)
         logger.info(f"Managed to ban some random account yippiee! {message.author} ({message.author.id}) in #{message.channel.name} for {reason}")
@@ -613,74 +656,79 @@ class AntiMrBeast(commands.Cog, name="antimrbeast"):
     )
     @is_potato()
     async def trainmodel(self, context: Context) -> None:
-        positives, negatives = training.whatdoihave()
-        total = positives + negatives
-
-        if total < 128:
-            await context.send(f"nooo i don't have enough data i'll probably do random stuff because I need at least 128 files worth of sorted data but I only have {total} dataaajhfghsd")
+        if self.donttrainme.locked():
+            await context.send("I think I' already training so um no thanks u need to wait or else my cpu will explod")
             return
         
-        embed = discord.Embed(
-            title="Learning stuff",
-            description=f"Okii so I know **{positives}** positives and {negatives} negatives ",
-            color=0xFFC5D3,
-            timestamp=discord.utils.utcnow()
-        )
-        embed.add_field(name="What am I doing", value="figuring stuff out wait", inline=False)
-        whatamidoing = await context.send(embed=embed)
+        async with self.donttrainme:
+            positives, negatives = training.whatdoihave()
+            total = positives + negatives
 
-        woah = asyncio.get_event_loop()
+            if total < 128:
+                await context.send(f"nooo i don't have enough data i'll probably do random stuff because I need at least 128 files worth of sorted data but I only have {total} dataaajhfghsd")
+                return
+            
+            embed = discord.Embed(
+                title="Learning stuff",
+                description=f"Okii so I know **{positives}** positives and {negatives} negatives ",
+                color=0xFFC5D3,
+                timestamp=discord.utils.utcnow()
+            )
+            embed.add_field(name="What am I doing", value="figuring stuff out wait", inline=False)
+            whatamidoing = await context.send(embed=embed)
 
-        def dotheupdatethingbutitsinafunctionbecausegithubtoldmeto(epoch, howmanyepochs, loss, trainingaccuracy, accuracy, howmuchtimepassed, eta):
-            async def dotheupdatething():
-                try:
-                    embed = discord.Embed(
-                        title="Learning stuff",
-                        color=0xFFC5D3,
-                        timestamp=discord.utils.utcnow()
-                    )
-                    embed.add_field(name="How much did I do", value=f"{epoch}/{howmanyepochs} epochs", inline=False)
-                    embed.add_field(name="What did I lose", value=f"{loss:.2f}", inline=True) # having to use a whole f string is cruel just because I want that :.2f
-                    embed.add_field(name="some random training accuracy", value=f"{trainingaccuracy:.2f}", inline=True)
-                    embed.add_field(name="some random other accuracy", value=f"{accuracy:.2f}", inline=True)
-                    embed.add_field(name="how long am i taking", value=f"{howmuchtimepassed} seconds i think", inline=True)
-                    embed.add_field(name="ETA", value=f"{eta} seconds i think", inline=True)
-                    await whatamidoing.edit(embed=embed)
-                except Exception:
-                    pass
-            asyncio.run_coroutine_threadsafe(dotheupdatething(), woah)
+            woah = asyncio.get_event_loop()
 
-        try:
-            result = await woah.run_in_executor(self.executor, lambda: training.train_model(dotheupdatethingbutitsinafunctionbecausegithubtoldmeto))
-        except Exception as e:
-            await whatamidoing.edit(content="i broke")
-            logger.error(f"training blew up {e}")
-            return
-        
-        promodel = await woah.run_in_executor(None, training.loadsomemodel, result["version"])
-        if promodel:
-            self.model_session = promodel
-            self.model_version = result["version"]
-        try:
-            await self.bot.database.add_model_version(result["version"], result["accuracy"], result["train_n"], result["n"], result["positives"], result["negatives"], str(context.author.id))
-            # I hate how I vibecoded this tiny thing and now all of the variable names are inconsistent so like I can't even tell if I should've used val_n or n for example i hate itt
-            # these lines are also so long and annoyinbfdjksbf
-            # managed to fix it up a little bit yippii
-        except Exception as e:
-            logger.error(f"u broke this 50 times already istg {e}")
+            def dotheupdatethingbutitsinafunctionbecausegithubtoldmeto(epoch, howmanyepochs, loss, trainingaccuracy, accuracy, howmuchtimepassed, eta):
+                async def dotheupdatething():
+                    try:
+                        embed = discord.Embed(
+                            title="Learning stuff",
+                            color=0xFFC5D3,
+                            timestamp=discord.utils.utcnow()
+                        )
+                        embed.add_field(name="How much did I do", value=f"{epoch}/{howmanyepochs} epochs", inline=False)
+                        embed.add_field(name="What did I lose", value=f"{loss:.2f}", inline=True) # having to use a whole f string is cruel just because I want that :.2f
+                        embed.add_field(name="some random training accuracy", value=f"{trainingaccuracy:.2f}", inline=True)
+                        embed.add_field(name="some random other accuracy", value=f"{accuracy:.2f}", inline=True)
+                        embed.add_field(name="how long am i taking", value=f"{howmuchtimepassed} seconds i think", inline=True)
+                        embed.add_field(name="ETA", value=f"{eta} seconds i think", inline=True)
+                        await whatamidoing.edit(embed=embed)
+                    except Exception:
+                        pass
+                asyncio.run_coroutine_threadsafe(dotheupdatething(), woah)
 
-        embed = discord.Embed(
-            title=f"oki so i finished model v{result["version"]}",
-            color = 0xFFC5D3,
-            timestamp=discord.utils.utcnow()
-        )
-        embed.add_field(name="Accuracy", value=f"{result["accuracy"]:.1%}", inline=True)
-        embed.add_field(name="Examples", value=f"{result["train_n"]}", inline=True)
-        embed.add_field(name="Other thing", value=f"{result["n"]} examples", inline=True)
-        embed.add_field(name="What do I know", value=f"{result["positives"]} positive / {result["negatives"]} negative / {(result["positives"] + result["negatives"])} total", inline=True)
-        embed.add_field(name="Time thing", value=f"{result["elapsed"]}", inline=True)
-        await whatamidoing.edit(embed=embed)
-        logger.info(f"i trained some model and it probably works, it's v{result["version"]} and {context.author} trained it")
+            try:
+                result = await woah.run_in_executor(self.executor, lambda: training.train_model(dotheupdatethingbutitsinafunctionbecausegithubtoldmeto))
+            except Exception as e:
+                await whatamidoing.edit(content="i broke")
+                logger.error(f"training blew up {e}")
+                return
+            
+            promodel = await woah.run_in_executor(None, training.loadsomemodel, result["version"])
+            if promodel:
+                self.model_session = promodel
+                self.model_version = result["version"]
+            try:
+                await self.bot.database.add_model_version(result["version"], result["accuracy"], result["train_n"], result["n"], result["positives"], result["negatives"], str(context.author.id))
+                # I hate how I vibecoded this tiny thing and now all of the variable names are inconsistent so like I can't even tell if I should've used val_n or n for example i hate itt
+                # these lines are also so long and annoyinbfdjksbf
+                # managed to fix it up a little bit yippii
+            except Exception as e:
+                logger.error(f"u broke this 50 times already istg {e}")
+
+            embed = discord.Embed(
+                title=f"oki so i finished model v{result["version"]}",
+                color = 0xFFC5D3,
+                timestamp=discord.utils.utcnow()
+            )
+            embed.add_field(name="Accuracy", value=f"{result["accuracy"]:.1%}", inline=True)
+            embed.add_field(name="Examples", value=f"{result["train_n"]}", inline=True)
+            embed.add_field(name="Other thing", value=f"{result["n"]} examples", inline=True)
+            embed.add_field(name="What do I know", value=f"{result["positives"]} positive / {result["negatives"]} negative / {(result["positives"] + result["negatives"])} total", inline=True)
+            embed.add_field(name="Time thing", value=f"{result["elapsed"]}", inline=True)
+            await whatamidoing.edit(embed=embed)
+            logger.info(f"i trained some model and it probably works, it's v{result["version"]} and {context.author} trained it")
 
 
 

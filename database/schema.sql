@@ -13,6 +13,11 @@ CREATE TABLE IF NOT EXISTS `compromised_accounts` (
   `dm_message_id` varchar(20)
 );
 
+DELETE FROM compromised_accounts WHERE user_id NOT IN (
+    SELECT user_id FROM compromised_accounts WHERE unban_at > datetime('now')
+)
+AND unban_at IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS `scam_hashes` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `algo` TEXT NOT NULL,
